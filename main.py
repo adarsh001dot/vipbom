@@ -3,28 +3,27 @@ import aiohttp
 import json
 import re
 import time
-import pymysql
-import pymysql.cursors
 from datetime import datetime, timedelta
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 import logging
+from pathlib import Path
 from typing import Optional
 import html
+import motor.motor_asyncio
+from pymongo import MongoClient
+import certifi
+import os
 
 # Bot configuration
 BOT_TOKEN = "8448343135:AAEP7CjK4cI4SoeR16ytrG2ytjkncpkTKPw"
 
-# MySQL Configuration
-MYSQL_CONFIG = {
-    'host': 'localhost',
-    'port': 3306,
-    'database': 'vipxoffic_vip',
-    'user': 'vipxoffic_vip',
-    'password': 'vipxoffic_vip',
-    'charset': 'utf8mb4',
-    'cursorclass': pymysql.cursors.DictCursor
-}
+# MongoDB configuration
+MONGODB_URI = "mongodb+srv://nikilsaxena843_db_user:3gF2wyT4IjsFt0cY@vipbot.puv6gfk.mongodb.net/?appName=vipbot"
+DATABASE_NAME = "bomb_bot"
+COLLECTION_USERS = "authorized_users"
+COLLECTION_LOGS = "attack_logs"
+COLLECTION_SETTINGS = "user_settings"
 
 # Enable logging
 logging.basicConfig(
@@ -33,80 +32,47 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# =============== DATABASE FUNCTIONS ===============
-
-def get_db_connection():
-    """Get MySQL database connection"""
-    try:
-        connection = pymysql.connect(**MYSQL_CONFIG)
-        return connection
-    except pymysql.Error as e:
-        logger.error(f"MySQL Connection Error: {e}")
-        return None
-
-def init_database():
-    """Initialize MySQL database tables"""
-    connection = get_db_connection()
-    if not connection:
-        print("❌ Failed to connect to MySQL database")
-        return
+# =============== MONGODB CONNECTION ===============
+class MongoDB:
+    client: motor.motor_asyncio.AsyncIOMotorClient = None
+    db = None
     
-    try:
-        cursor = connection.cursor()
-        
-        # Create authorized_users table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS authorized_users (
-                user_id BIGINT PRIMARY KEY,
-                username VARCHAR(255),
-                display_name VARCHAR(255),
-                added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                added_by BIGINT,
-                trial_used_count INT DEFAULT 0,
-                last_trial_used TIMESTAMP NULL,
-                is_trial_blocked BOOLEAN DEFAULT 0,
-                is_paid_user BOOLEAN DEFAULT 0
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-        ''')
-        
-        # Create attack_logs table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS attack_logs (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                user_id BIGINT,
-                target_number VARCHAR(20),
-                duration_seconds INT,
-                requests_sent INT,
-                requests_success INT,
-                requests_failed INT,
-                start_time TIMESTAMP,
-                end_time TIMESTAMP,
-                status VARCHAR(50),
-                is_trial_attack BOOLEAN DEFAULT 0,
-                INDEX idx_user_id (user_id),
-                INDEX idx_start_time (start_time)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-        ''')
-        
-        # Create user_settings table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS user_settings (
-                user_id BIGINT PRIMARY KEY,
-                speed_level INT DEFAULT 3,
-                max_concurrent INT DEFAULT 10,
-                delay_between_requests FLOAT DEFAULT 0.1,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-        ''')
-        
-        connection.commit()
-        print("✅ MySQL Database initialized successfully")
-        
-    except pymysql.Error as e:
-        print(f"❌ Database initialization error: {e}")
-    finally:
-        cursor.close()
-        connection.close()
+    @classmethod
+    async def connect(cls):
+        """Create MongoDB connection"""
+        try:
+            # Use certifi for SSL certificates
+            cls.client = motor.motor_asyncio.AsyncIOMotorClient(
+                MONGODB_URI,
+                tlsCAFile=certifi.where(),
+                serverSelectionTimeoutMS=5000
+            )
+            # Test connection
+            await cls.client.admin.command('ping')
+            cls.db = cls.client[DATABASE_NAME]
+            
+            # Create indexes for better performance
+            await cls.db[COLLECTION_USERS].create_index("user_id", unique=True)
+            await cls.db[COLLECTION_USERS].create_index("username")
+            await cls.db[COLLECTION_LOGS].create_index("user_id")
+            await cls.db[COLLECTION_LOGS].create_index("start_time")
+            await cls.db[COLLECTION_SETTINGS].create_index("user_id", unique=True)
+            
+            print("✅ MongoDB Connected Successfully!")
+            return True
+        except Exception as e:
+            print(f"❌ MongoDB Connection Failed: {e}")
+            return False
+    
+    @classmethod
+    async def close(cls):
+        """Close MongoDB connection"""
+        if cls.client:
+            cls.client.close()
+            print("🔌 MongoDB Connection Closed")
+
+# Initialize MongoDB instance
+mongo = MongoDB()
 
 def clean_text(text: str) -> str:
     """Clean special characters and emojis from text"""
@@ -119,243 +85,121 @@ def clean_text(text: str) -> str:
     cleaned = re.sub(r'[^\w\s\-@\._#&]', '', cleaned, flags=re.UNICODE)
     return cleaned.strip()[:50]  # Limit length
 
-def add_authorized_user(user_id: int, username: str, display_name: str, added_by: int, is_paid: bool = False):
+async def add_authorized_user(user_id: int, username: str, display_name: str, added_by: int, is_paid: bool = False):
     """Add user to authorized list with cleaned text"""
-    connection = get_db_connection()
-    if not connection:
-        logger.error("Failed to connect to database")
-        return
+    # Clean the inputs
+    clean_username = clean_text(username)
+    clean_display_name = clean_text(display_name)
     
-    try:
-        cursor = connection.cursor()
-        
-        # Clean the inputs
-        clean_username = clean_text(username)
-        clean_display_name = clean_text(display_name)
-        
-        if is_paid:
-            cursor.execute('''
-                INSERT INTO authorized_users 
-                (user_id, username, display_name, added_by, is_paid_user, trial_used_count, is_trial_blocked) 
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-                ON DUPLICATE KEY UPDATE
-                username = VALUES(username),
-                display_name = VALUES(display_name),
-                added_by = VALUES(added_by),
-                is_paid_user = VALUES(is_paid_user),
-                trial_used_count = VALUES(trial_used_count),
-                is_trial_blocked = VALUES(is_trial_blocked)
-            ''', (user_id, clean_username, clean_display_name, added_by, 1, 0, 1))
-        else:
-            # Check if user exists
-            cursor.execute('SELECT * FROM authorized_users WHERE user_id = %s', (user_id,))
-            existing_user = cursor.fetchone()
-            
-            if not existing_user:
-                # New user - add with trial available
-                cursor.execute('''
-                    INSERT INTO authorized_users 
-                    (user_id, username, display_name, added_by, trial_used_count, is_trial_blocked) 
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                ''', (user_id, clean_username, clean_display_name, added_by, 0, 0))
-            else:
-                # Update existing user
-                cursor.execute('''
-                    UPDATE authorized_users 
-                    SET username = %s, display_name = %s, added_by = %s
-                    WHERE user_id = %s
-                ''', (clean_username, clean_display_name, added_by, user_id))
-        
-        connection.commit()
-        
-    except pymysql.Error as e:
-        logger.error(f"Database error in add_authorized_user: {e}")
-    finally:
-        cursor.close()
-        connection.close()
+    user_data = {
+        "user_id": user_id,
+        "username": clean_username,
+        "display_name": clean_display_name,
+        "added_at": datetime.now().isoformat(),
+        "added_by": added_by,
+        "trial_used_count": 0,
+        "last_trial_used": None,
+        "is_trial_blocked": False,
+        "is_paid_user": is_paid
+    }
+    
+    if is_paid:
+        user_data["is_trial_blocked"] = True
+    
+    # Update if exists, insert if not
+    await mongo.db[COLLECTION_USERS].update_one(
+        {"user_id": user_id},
+        {"$set": user_data},
+        upsert=True
+    )
 
-def remove_authorized_user(user_id: int):
+async def remove_authorized_user(user_id: int):
     """Remove user from authorized list"""
-    connection = get_db_connection()
-    if not connection:
-        return
-    
-    try:
-        cursor = connection.cursor()
-        cursor.execute('DELETE FROM authorized_users WHERE user_id = %s', (user_id,))
-        cursor.execute('DELETE FROM user_settings WHERE user_id = %s', (user_id,))
-        connection.commit()
-    except pymysql.Error as e:
-        logger.error(f"Database error in remove_authorized_user: {e}")
-    finally:
-        cursor.close()
-        connection.close()
+    await mongo.db[COLLECTION_USERS].delete_one({"user_id": user_id})
+    await mongo.db[COLLECTION_SETTINGS].delete_one({"user_id": user_id})
 
-def is_user_authorized(user_id: int) -> bool:
+async def is_user_authorized(user_id: int) -> bool:
     """Check if user is authorized (paid user)"""
-    connection = get_db_connection()
-    if not connection:
-        return False
-    
-    try:
-        cursor = connection.cursor()
-        cursor.execute('SELECT is_paid_user FROM authorized_users WHERE user_id = %s', (user_id,))
-        result = cursor.fetchone()
-        return result is not None and result['is_paid_user'] == 1
-    except pymysql.Error as e:
-        logger.error(f"Database error in is_user_authorized: {e}")
-        return False
-    finally:
-        cursor.close()
-        connection.close()
+    user = await mongo.db[COLLECTION_USERS].find_one({"user_id": user_id})
+    return user is not None and user.get("is_paid_user", False)
 
-def can_user_use_trial(user_id: int) -> tuple[bool, str]:
+async def can_user_use_trial(user_id: int) -> tuple[bool, str]:
     """Check if user can use trial (once per week) - STRICT CHECK"""
-    connection = get_db_connection()
-    if not connection:
-        return False, "Database connection error"
+    user = await mongo.db[COLLECTION_USERS].find_one({"user_id": user_id})
     
-    try:
-        cursor = connection.cursor()
-        cursor.execute('''
-            SELECT trial_used_count, last_trial_used, is_trial_blocked, is_paid_user 
-            FROM authorized_users WHERE user_id = %s
-        ''', (user_id,))
-        
-        result = cursor.fetchone()
-        
-        # If user doesn't exist, they can use trial once
-        if not result:
-            return True, "First-time user, trial available"
-        
-        trial_used_count = result['trial_used_count']
-        last_trial_used = result['last_trial_used']
-        is_trial_blocked = result['is_trial_blocked']
-        is_paid_user = result['is_paid_user']
-        
-        # Check if user is paid user
-        if is_paid_user:
-            return False, "Paid users cannot use trial"
-        
-        # Check if trial is blocked
-        if is_trial_blocked:
-            return False, "Trial permanently blocked after first use"
-        
-        # If never used trial
-        if trial_used_count == 0 or last_trial_used is None:
-            return True, "First trial available"
-        
-        return False, "Trial already used"
-        
-    except pymysql.Error as e:
-        logger.error(f"Database error in can_user_use_trial: {e}")
-        return False, "Database error"
-    finally:
-        cursor.close()
-        connection.close()
+    # If user doesn't exist, they can use trial once
+    if not user:
+        return True, "First-time user, trial available"
+    
+    trial_used_count = user.get("trial_used_count", 0)
+    is_trial_blocked = user.get("is_trial_blocked", False)
+    is_paid_user = user.get("is_paid_user", False)
+    
+    # Check if user is paid user
+    if is_paid_user:
+        return False, "Paid users cannot use trial"
+    
+    # Check if trial is blocked
+    if is_trial_blocked:
+        return False, "Trial permanently blocked after first use"
+    
+    # If never used trial
+    if trial_used_count == 0:
+        return True, "First trial available"
+    
+    return False, "Trial already used"
 
-def mark_trial_used(user_id: int):
+async def mark_trial_used(user_id: int):
     """Mark trial as used for user - PERMANENTLY BLOCK after first use"""
-    connection = get_db_connection()
-    if not connection:
-        return
+    current_time = datetime.now().isoformat()
     
-    try:
-        cursor = connection.cursor()
-        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        
-        cursor.execute('''
-            UPDATE authorized_users 
-            SET trial_used_count = trial_used_count + 1,
-                last_trial_used = %s,
-                is_trial_blocked = 1
-            WHERE user_id = %s
-        ''', (current_time, user_id))
-        
-        connection.commit()
-        logger.info(f"Trial marked as used for user {user_id} - PERMANENTLY BLOCKED")
-        
-    except pymysql.Error as e:
-        logger.error(f"Database error in mark_trial_used: {e}")
-    finally:
-        cursor.close()
-        connection.close()
+    await mongo.db[COLLECTION_USERS].update_one(
+        {"user_id": user_id},
+        {
+            "$inc": {"trial_used_count": 1},
+            "$set": {
+                "last_trial_used": current_time,
+                "is_trial_blocked": True
+            }
+        }
+    )
+    logger.info(f"Trial marked as used for user {user_id} - PERMANENTLY BLOCKED")
 
-def block_user_trial(user_id: int):
+async def block_user_trial(user_id: int):
     """Permanently block trial for user"""
-    connection = get_db_connection()
-    if not connection:
-        return
-    
-    try:
-        cursor = connection.cursor()
-        cursor.execute('''
-            UPDATE authorized_users 
-            SET is_trial_blocked = 1
-            WHERE user_id = %s
-        ''', (user_id,))
-        
-        connection.commit()
-        logger.info(f"Trial blocked for user {user_id}")
-        
-    except pymysql.Error as e:
-        logger.error(f"Database error in block_user_trial: {e}")
-    finally:
-        cursor.close()
-        connection.close()
+    await mongo.db[COLLECTION_USERS].update_one(
+        {"user_id": user_id},
+        {"$set": {"is_trial_blocked": True}}
+    )
+    logger.info(f"Trial blocked for user {user_id}")
 
-def unblock_user_trial(user_id: int):
+async def unblock_user_trial(user_id: int):
     """Unblock trial for user"""
-    connection = get_db_connection()
-    if not connection:
-        return
-    
-    try:
-        cursor = connection.cursor()
-        cursor.execute('''
-            UPDATE authorized_users 
-            SET is_trial_blocked = 0
-            WHERE user_id = %s
-        ''', (user_id,))
-        
-        connection.commit()
-        logger.info(f"Trial unblocked for user {user_id}")
-        
-    except pymysql.Error as e:
-        logger.error(f"Database error in unblock_user_trial: {e}")
-    finally:
-        cursor.close()
-        connection.close()
+    await mongo.db[COLLECTION_USERS].update_one(
+        {"user_id": user_id},
+        {"$set": {"is_trial_blocked": False}}
+    )
+    logger.info(f"Trial unblocked for user {user_id}")
 
-def reset_user_trial(user_id: int):
+async def reset_user_trial(user_id: int):
     """Reset user's trial (admin only)"""
-    connection = get_db_connection()
-    if not connection:
-        return
-    
-    try:
-        cursor = connection.cursor()
-        cursor.execute('''
-            UPDATE authorized_users 
-            SET trial_used_count = 0,
-                last_trial_used = NULL,
-                is_trial_blocked = 0
-            WHERE user_id = %s
-        ''', (user_id,))
-        
-        connection.commit()
-        logger.info(f"Trial reset for user {user_id}")
-        
-    except pymysql.Error as e:
-        logger.error(f"Database error in reset_user_trial: {e}")
-    finally:
-        cursor.close()
-        connection.close()
+    await mongo.db[COLLECTION_USERS].update_one(
+        {"user_id": user_id},
+        {
+            "$set": {
+                "trial_used_count": 0,
+                "last_trial_used": None,
+                "is_trial_blocked": False
+            }
+        }
+    )
+    logger.info(f"Trial reset for user {user_id}")
 
-def get_user_trial_info(user_id: int) -> dict:
+async def get_user_trial_info(user_id: int) -> dict:
     """Get user's trial information"""
-    connection = get_db_connection()
-    if not connection:
+    user = await mongo.db[COLLECTION_USERS].find_one({"user_id": user_id})
+    
+    if not user:
         return {
             'trial_used_count': 0,
             'last_trial_used': None,
@@ -366,188 +210,106 @@ def get_user_trial_info(user_id: int) -> dict:
             'exists': False
         }
     
-    try:
-        cursor = connection.cursor()
-        cursor.execute('''
-            SELECT trial_used_count, last_trial_used, is_trial_blocked, is_paid_user, display_name
-            FROM authorized_users WHERE user_id = %s
-        ''', (user_id,))
-        
-        result = cursor.fetchone()
-        
-        if not result:
-            return {
-                'trial_used_count': 0,
-                'last_trial_used': None,
-                'is_trial_blocked': False,
-                'is_paid_user': False,
-                'display_name': '',
-                'trial_available': True,
-                'exists': False
-            }
-        
-        trial_used_count = result['trial_used_count']
-        last_trial_used = result['last_trial_used']
-        is_trial_blocked = result['is_trial_blocked']
-        is_paid_user = result['is_paid_user']
-        display_name = result['display_name']
-        
-        # Check if trial is available
-        trial_available = False
-        if not is_trial_blocked and not is_paid_user:
-            if trial_used_count == 0 or last_trial_used is None:
-                trial_available = True
-        
-        return {
-            'trial_used_count': trial_used_count,
-            'last_trial_used': str(last_trial_used) if last_trial_used else None,
-            'is_trial_blocked': bool(is_trial_blocked),
-            'is_paid_user': bool(is_paid_user),
-            'display_name': display_name or '',
-            'trial_available': trial_available,
-            'exists': True
-        }
-        
-    except pymysql.Error as e:
-        logger.error(f"Database error in get_user_trial_info: {e}")
-        return {
-            'trial_used_count': 0,
-            'last_trial_used': None,
-            'is_trial_blocked': False,
-            'is_paid_user': False,
-            'display_name': '',
-            'trial_available': False,
-            'exists': False
-        }
-    finally:
-        cursor.close()
-        connection.close()
+    trial_used_count = user.get("trial_used_count", 0)
+    last_trial_used = user.get("last_trial_used")
+    is_trial_blocked = user.get("is_trial_blocked", False)
+    is_paid_user = user.get("is_paid_user", False)
+    display_name = user.get("display_name", "")
+    
+    # Check if trial is available
+    trial_available = False
+    if not is_trial_blocked and not is_paid_user:
+        if trial_used_count == 0:
+            trial_available = True
+    
+    return {
+        'trial_used_count': trial_used_count,
+        'last_trial_used': last_trial_used,
+        'is_trial_blocked': is_trial_blocked,
+        'is_paid_user': is_paid_user,
+        'display_name': display_name,
+        'trial_available': trial_available,
+        'exists': True
+    }
 
-def get_all_authorized_users():
+async def get_all_authorized_users():
     """Get all authorized users"""
-    connection = get_db_connection()
-    if not connection:
-        return []
+    cursor = mongo.db[COLLECTION_USERS].find().sort("added_at", -1)
+    users = await cursor.to_list(length=None)
     
-    try:
-        cursor = connection.cursor()
-        cursor.execute('''
-            SELECT user_id, username, display_name, added_at, trial_used_count, 
-                   last_trial_used, is_trial_blocked, is_paid_user 
-            FROM authorized_users 
-            ORDER BY added_at DESC
-        ''')
-        users = cursor.fetchall()
-        return users
-        
-    except pymysql.Error as e:
-        logger.error(f"Database error in get_all_authorized_users: {e}")
-        return []
-    finally:
-        cursor.close()
-        connection.close()
+    # Format for compatibility with existing code
+    formatted_users = []
+    for user in users:
+        formatted_users.append((
+            user.get("user_id"),
+            user.get("username", ""),
+            user.get("display_name", ""),
+            user.get("added_at", ""),
+            user.get("trial_used_count", 0),
+            user.get("last_trial_used"),
+            user.get("is_trial_blocked", False),
+            user.get("is_paid_user", False)
+        ))
+    
+    return formatted_users
 
-def get_user_speed_settings(user_id: int):
+async def get_user_speed_settings(user_id: int):
     """Get user's speed settings"""
-    connection = get_db_connection()
-    if not connection:
-        return {
-            'speed_level': 3,
-            'max_concurrent': 10,
-            'delay': 0.1
-        }
+    settings = await mongo.db[COLLECTION_SETTINGS].find_one({"user_id": user_id})
     
-    try:
-        cursor = connection.cursor()
-        cursor.execute('''
-            SELECT speed_level, max_concurrent, delay_between_requests 
-            FROM user_settings WHERE user_id = %s
-        ''', (user_id,))
-        result = cursor.fetchone()
-        
-        if result:
-            return {
-                'speed_level': result['speed_level'],
-                'max_concurrent': result['max_concurrent'],
-                'delay': result['delay_between_requests']
-            }
-        else:
-            # Default settings
-            default_settings = {
-                'speed_level': 3,
-                'max_concurrent': 10,
-                'delay': 0.1
-            }
-            set_user_speed_settings(user_id, default_settings)
-            return default_settings
-            
-    except pymysql.Error as e:
-        logger.error(f"Database error in get_user_speed_settings: {e}")
+    if settings:
         return {
+            'speed_level': settings.get('speed_level', 3),
+            'max_concurrent': settings.get('max_concurrent', 10),
+            'delay': settings.get('delay_between_requests', 0.1)
+        }
+    else:
+        # Default settings
+        default_settings = {
             'speed_level': 3,
             'max_concurrent': 10,
             'delay': 0.1
         }
-    finally:
-        cursor.close()
-        connection.close()
+        await set_user_speed_settings(user_id, default_settings)
+        return default_settings
 
-def set_user_speed_settings(user_id: int, settings: dict):
+async def set_user_speed_settings(user_id: int, settings: dict):
     """Set user's speed settings"""
-    connection = get_db_connection()
-    if not connection:
-        return
+    settings_data = {
+        "user_id": user_id,
+        "speed_level": settings['speed_level'],
+        "max_concurrent": settings['max_concurrent'],
+        "delay_between_requests": settings['delay'],
+        "updated_at": datetime.now().isoformat()
+    }
     
-    try:
-        cursor = connection.cursor()
-        cursor.execute('''
-            INSERT INTO user_settings 
-            (user_id, speed_level, max_concurrent, delay_between_requests, updated_at)
-            VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
-            ON DUPLICATE KEY UPDATE
-            speed_level = VALUES(speed_level),
-            max_concurrent = VALUES(max_concurrent),
-            delay_between_requests = VALUES(delay_between_requests),
-            updated_at = CURRENT_TIMESTAMP
-        ''', (user_id, settings['speed_level'], settings['max_concurrent'], settings['delay']))
-        
-        connection.commit()
-        
-    except pymysql.Error as e:
-        logger.error(f"Database error in set_user_speed_settings: {e}")
-    finally:
-        cursor.close()
-        connection.close()
+    await mongo.db[COLLECTION_SETTINGS].update_one(
+        {"user_id": user_id},
+        {"$set": settings_data},
+        upsert=True
+    )
 
-def log_attack(user_id: int, target_number: str, duration: int, requests_sent: int, 
-               success: int, failed: int, start_time: datetime, end_time: datetime, 
-               status: str, is_trial_attack: bool = False):
+async def log_attack(user_id: int, target_number: str, duration: int, requests_sent: int, 
+                     success: int, failed: int, start_time: datetime, end_time: datetime, 
+                     status: str, is_trial_attack: bool = False):
     """Log attack details to database"""
-    connection = get_db_connection()
-    if not connection:
-        return
+    log_data = {
+        "user_id": user_id,
+        "target_number": target_number,
+        "duration_seconds": duration,
+        "requests_sent": requests_sent,
+        "requests_success": success,
+        "requests_failed": failed,
+        "start_time": start_time.isoformat(),
+        "end_time": end_time.isoformat(),
+        "status": status,
+        "is_trial_attack": is_trial_attack,
+        "timestamp": datetime.now().isoformat()
+    }
     
-    try:
-        cursor = connection.cursor()
-        cursor.execute('''
-            INSERT INTO attack_logs 
-            (user_id, target_number, duration_seconds, requests_sent, requests_success, 
-             requests_failed, start_time, end_time, status, is_trial_attack)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        ''', (user_id, target_number, duration, requests_sent, success, failed, 
-              start_time.strftime('%Y-%m-%d %H:%M:%S'), 
-              end_time.strftime('%Y-%m-%d %H:%M:%S'), 
-              status, is_trial_attack))
-        
-        connection.commit()
-        
-    except pymysql.Error as e:
-        logger.error(f"Database error in log_attack: {e}")
-    finally:
-        cursor.close()
-        connection.close()
+    await mongo.db[COLLECTION_LOGS].insert_one(log_data)
 
-# Speed level presets
+# Speed level presets (unchanged)
 SPEED_PRESETS = {
     1: {  # Very Slow (Safe Mode)
         'name': '🐢 Very Slow',
@@ -586,13 +348,10 @@ SPEED_PRESETS = {
     }
 }
 
-# Initialize database
-init_database()
-
 # =============== ALL APIs START ===============
 APIS = [
     # ============ ORIGINAL API ============
-        {
+    {
         "url": "https://splexxo1-2api.vercel.app/bomb?phone={phone}&key=SPLEXXO",
         "method": "GET",
         "headers": {},
@@ -2227,7 +1986,6 @@ APIS = [
         "data": lambda phone: f"mobile={phone}&current_page=login&is_existing_customer=2",
         "count": 200
     }
-
 ]
 # =============== ALL APIs END ===============
 
@@ -2251,15 +2009,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     username = update.effective_user.username or "Not set"
     
     # Get trial info
-    trial_info = get_user_trial_info(user_id)
+    trial_info = await get_user_trial_info(user_id)
     
     # If user doesn't exist in database, add them
     if not trial_info['exists']:
-        add_authorized_user(user_id, username, clean_first_name, 0, False)
-        trial_info = get_user_trial_info(user_id)
+        await add_authorized_user(user_id, username, clean_first_name, 0, False)
+        trial_info = await get_user_trial_info(user_id)
     
     # Check if user can use trial
-    trial_allowed, reason = can_user_use_trial(user_id)
+    trial_allowed, reason = await can_user_use_trial(user_id)
     
     welcome_text = f"""
 ╔════════════════════════════════════════════════╗
@@ -2301,10 +2059,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ├─ ❌ After trial: PERMANENTLY BLOCKED
 ├─ 🔒 No further trial access after use
 ├─ 💰 Contact admin for paid access only
-└─ 👑 Admin: @VIP_X_OFFICIAL
+└─ 👑 Admin: @PRIME_MODDER_X
 
 💰 FOR FULL ACCESS:
-Contact: @VIP_X_OFFICIAL
+Contact: @PRIME_MODDER_X
 
 📡 STATUS: ✅ ONLINE | ⚡ READY FOR FLASH ATTACK
 """
@@ -2320,15 +2078,15 @@ async def mytrial(update: Update, context: ContextTypes.DEFAULT_TYPE):
     clean_first_name = clean_text(user_first_name)
     username = update.effective_user.username or "Not set"
     
-    trial_info = get_user_trial_info(user_id)
+    trial_info = await get_user_trial_info(user_id)
     
     # If user doesn't exist, add them
     if not trial_info['exists']:
-        add_authorized_user(user_id, username, clean_first_name, 0, False)
-        trial_info = get_user_trial_info(user_id)
+        await add_authorized_user(user_id, username, clean_first_name, 0, False)
+        trial_info = await get_user_trial_info(user_id)
     
     # Check trial availability
-    trial_allowed, reason = can_user_use_trial(user_id)
+    trial_allowed, reason = await can_user_use_trial(user_id)
     
     status_emoji = "✅" if trial_allowed else "❌"
     status_text = "AVAILABLE" if trial_allowed else "NOT AVAILABLE"
@@ -2376,7 +2134,7 @@ async def mytrial(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ├─ 🔒 Trial access is PERMANENTLY BLOCKED
 ├─ ⚠️ One-time trial already used
 ├─ 💰 Contact admin for paid access
-└─ 👑 Admin: @VIP_X_OFFICIAL
+└─ 👑 Admin: @PRIME_MODDER_X
 """
     
     await update.message.reply_text(trial_status_text)
@@ -2391,15 +2149,15 @@ async def trial(update: Update, context: ContextTypes.DEFAULT_TYPE):
     username = update.effective_user.username or "Not set"
     
     # STRICT CHECK: First check database
-    trial_info = get_user_trial_info(user_id)
+    trial_info = await get_user_trial_info(user_id)
     
     # If user doesn't exist, add them
     if not trial_info['exists']:
-        add_authorized_user(user_id, username, clean_first_name, 0, False)
-        trial_info = get_user_trial_info(user_id)
+        await add_authorized_user(user_id, username, clean_first_name, 0, False)
+        trial_info = await get_user_trial_info(user_id)
     
     # Check if user can use trial - STRICT CHECK
-    trial_allowed, reason = can_user_use_trial(user_id)
+    trial_allowed, reason = await can_user_use_trial(user_id)
     
     if not trial_allowed:
         await update.message.reply_text(
@@ -2422,7 +2180,7 @@ Reason: {reason}
 ├─ Only paid access now
 
 💰 Contact Admin for Full Access:
-👑 @VIP_X_OFFICIAL
+👑 @PRIME_MODDER_X
 """
         )
         return
@@ -2451,7 +2209,7 @@ Example: /trial 9876543210
 ├─ ❌ After use: PERMANENTLY BLOCKED
 ├─ 🔒 No further trial access
 ├─ 💰 Contact admin for paid access
-└─ 👑 Admin: @VIP_X_OFFICIAL
+└─ 👑 Admin: @PRIME_MODDER_X
 """
         )
         return
@@ -2476,13 +2234,13 @@ Example: /trial 9876543210
 
 APIs are not configured yet.
 
-Contact admin for support: @VIP_X_OFFICIAL
+Contact admin for support: @PRIME_MODDER_X
 """
         )
         return
     
     # IMMEDIATELY mark trial as used and BLOCK it
-    mark_trial_used(user_id)
+    await mark_trial_used(user_id)
     
     # Set speed to level 5 for flash attack
     flash_settings = {
@@ -2490,7 +2248,7 @@ Contact admin for support: @VIP_X_OFFICIAL
         'max_concurrent': SPEED_PRESETS[5]['max_concurrent'],
         'delay': SPEED_PRESETS[5]['delay']
     }
-    set_user_speed_settings(user_id, flash_settings)
+    await set_user_speed_settings(user_id, flash_settings)
     
     # Set flash attack parameters
     duration = 60  # 1 minute for trial
@@ -2510,7 +2268,7 @@ Contact admin for support: @VIP_X_OFFICIAL
     context.user_data['is_trial_attack'] = True
     
     # Get updated trial info
-    updated_trial_info = get_user_trial_info(user_id)
+    updated_trial_info = await get_user_trial_info(user_id)
     
     # Create initial flash attack message
     status_message = f"""
@@ -2572,11 +2330,11 @@ async def attack(update: Update, context: ContextTypes.DEFAULT_TYPE):
     clean_first_name = clean_text(user_first_name)
     
     # First check if user is paid user
-    if not is_user_authorized(user_id):
-        trial_info = get_user_trial_info(user_id)
+    if not await is_user_authorized(user_id):
+        trial_info = await get_user_trial_info(user_id)
         
         # Check if trial is available
-        trial_allowed, reason = can_user_use_trial(user_id)
+        trial_allowed, reason = await can_user_use_trial(user_id)
         
         if trial_allowed:
             await update.message.reply_text(
@@ -2594,7 +2352,7 @@ Use your free trial first:
 ├─ Trial: 60 seconds, ONE TIME ONLY
 ├─ After trial: PERMANENTLY BLOCKED
 ├─ Then contact admin for paid access
-└─ Admin: @VIP_X_OFFICIAL
+└─ Admin: @PRIME_MODDER_X
 """
             )
         else:
@@ -2613,7 +2371,7 @@ You have used your ONE-TIME trial.
 ├─ Paid User: ❌ No
 
 💰 Contact Admin for Full Access:
-👑 @VIP_X_OFFICIAL
+👑 @PRIME_MODDER_X
 ⚠️ Trial access is PERMANENTLY BLOCKED.
 Only paid access available now.
 """
@@ -2696,7 +2454,7 @@ Limits:
 
 APIs are not configured yet.
 
-Contact admin for support: @VIP_X_OFFICIAL
+Contact admin for support: @PRIME_MODDER_X
 """
         )
         return
@@ -2707,7 +2465,7 @@ Contact admin for support: @VIP_X_OFFICIAL
         'max_concurrent': SPEED_PRESETS[5]['max_concurrent'],
         'delay': SPEED_PRESETS[5]['delay']
     }
-    set_user_speed_settings(user_id, flash_settings)
+    await set_user_speed_settings(user_id, flash_settings)
     
     # Calculate end time
     current_time = datetime.now()
@@ -2740,7 +2498,7 @@ Contact admin for support: @VIP_X_OFFICIAL
 ├─ Account Type: ✅ PAID USER
 ├─ Trial Status: ❌ BLOCKED (One-time used)
 ├─ Access: Unlimited attacks
-└─ Admin: @VIP_X_OFFICIAL
+└─ Admin: @PRIME_MODDER_X
 
 ⚡ FLASH CONFIGURATION:
 ├─ Speed: FLASH MODE (Level 5)
@@ -2908,7 +2666,7 @@ async def run_flash_attack(update: Update, context: ContextTypes.DEFAULT_TYPE, p
     await update_flash_final_status(context, chat_id, message_id, phone, elapsed, speed_settings, is_trial)
     
     # Log attack
-    log_attack(
+    await log_attack(
         user_id=update.effective_user.id,
         target_number=phone,
         duration=elapsed,
@@ -3021,7 +2779,7 @@ async def update_flash_final_status(context: ContextTypes.DEFAULT_TYPE, chat_id:
 ├─ 🔒 Trial access is NOW BLOCKED
 ├─ ⚠️ You cannot use trial again
 ├─ 💰 Contact admin for paid access
-└─ 👑 @VIP_X_OFFICIAL
+└─ 👑 @PRIME_MODDER_X
 """
         else:
             final_message += f"""
@@ -3098,7 +2856,7 @@ async def stop_attack(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     if is_trial:
         # Get trial info
-        trial_info = get_user_trial_info(user_id)
+        trial_info = await get_user_trial_info(user_id)
         
         stop_message += f"""
 ⚠️ TRIAL STATUS:
@@ -3106,7 +2864,7 @@ async def stop_attack(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ├─ 🔒 Trial access is PERMANENTLY BLOCKED
 ├─ ⚠️ Cannot use trial again
 ├─ 💰 Contact admin for paid access
-└─ 👑 @VIP_X_OFFICIAL
+└─ 👑 @PRIME_MODDER_X
 """
     else:
         stop_message += f"""
@@ -3149,8 +2907,8 @@ async def speed_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     
     # Check if user is authorized (paid user)
-    if not is_user_authorized(user_id):
-        trial_info = get_user_trial_info(user_id)
+    if not await is_user_authorized(user_id):
+        trial_info = await get_user_trial_info(user_id)
         
         await update.message.reply_text(
             f"""
@@ -3169,12 +2927,12 @@ Speed control is available for PAID USERS only.
 Speed is fixed at Level 5 (FLASH MODE) for trial.
 
 💰 Contact Admin for Full Access:
-@VIP_X_OFFICIAL
+@PRIME_MODDER_X
 """
         )
         return
     
-    current_settings = get_user_speed_settings(user_id)
+    current_settings = await get_user_speed_settings(user_id)
     current_level = current_settings['speed_level']
     
     if not context.args:
@@ -3246,7 +3004,7 @@ Please use level 1-5:
             'delay': preset['delay']
         }
         
-        set_user_speed_settings(user_id, new_settings)
+        await set_user_speed_settings(user_id, new_settings)
         
         await update.message.reply_text(
             f"""
@@ -3302,7 +3060,7 @@ Only admins can use this command.
         clean_username = clean_text(username)
         
         # Add as paid user with trial blocked
-        add_authorized_user(target_id, clean_username, f"User {target_id}", user_id, True)
+        await add_authorized_user(target_id, clean_username, f"User {target_id}", user_id, True)
         
         await update.message.reply_text(
             f"""
@@ -3352,7 +3110,7 @@ Only admins can use this command.
     try:
         target_id = int(context.args[0])
         
-        remove_authorized_user(target_id)
+        await remove_authorized_user(target_id)
         
         await update.message.reply_text(
             f"""
@@ -3401,7 +3159,7 @@ Only admins can use this command.
         target_id = int(context.args[0])
         
         # Reset trial for user
-        reset_user_trial(target_id)
+        await reset_user_trial(target_id)
         
         await update.message.reply_text(
             f"""
@@ -3452,7 +3210,7 @@ Only admins can use this command.
         target_id = int(context.args[0])
         
         # Block trial for user
-        block_user_trial(target_id)
+        await block_user_trial(target_id)
         
         await update.message.reply_text(
             f"""
@@ -3502,7 +3260,7 @@ Only admins can use this command.
         target_id = int(context.args[0])
         
         # Unblock trial for user
-        unblock_user_trial(target_id)
+        await unblock_user_trial(target_id)
         
         await update.message.reply_text(
             f"""
@@ -3541,7 +3299,7 @@ Only admins can use this command.
         )
         return
     
-    users = get_all_authorized_users()
+    users = await get_all_authorized_users()
     
     if not users:
         await update.message.reply_text("📭 No authorized users found.")
@@ -3551,20 +3309,20 @@ Only admins can use this command.
     message += "║          📋 AUTHORIZED USERS          ║\n"
     message += "╚════════════════════════════════════════╝\n\n"
     
-    for idx, user in enumerate(users, 1):
-        status = "💰 PAID USER" if user['is_paid_user'] else "🎁 TRIAL USER"
-        trial_status = "✅ ACTIVE" if not user['is_trial_blocked'] else "❌ PERMANENTLY BLOCKED"
+    for idx, (user_id, username, display_name, added_at, trial_count, last_trial, trial_blocked, is_paid) in enumerate(users, 1):
+        status = "💰 PAID USER" if is_paid else "🎁 TRIAL USER"
+        trial_status = "✅ ACTIVE" if not trial_blocked else "❌ PERMANENTLY BLOCKED"
         
         message += f"┌─👤 USER #{idx}\n"
         message += f"│\n"
-        message += f"├─ ID: {user['user_id']}\n"
-        message += f"├─ Username: {user['username'] or 'N/A'}\n"
-        message += f"├─ Display Name: {user['display_name'] or 'N/A'}\n"
+        message += f"├─ ID: {user_id}\n"
+        message += f"├─ Username: {username or 'N/A'}\n"
+        message += f"├─ Display Name: {display_name or 'N/A'}\n"
         message += f"├─ Status: {status}\n"
-        message += f"├─ Trials Used: {user['trial_used_count']}\n"
-        message += f"├─ Last Trial: {str(user['last_trial_used']).split(' ')[0] if user['last_trial_used'] else 'Never'}\n"
+        message += f"├─ Trials Used: {trial_count}\n"
+        message += f"├─ Last Trial: {last_trial.split('T')[0] if last_trial else 'Never'}\n"
         message += f"├─ Trial Status: {trial_status}\n"
-        message += f"└─ Added: {user['added_at']}\n\n"
+        message += f"└─ Added: {added_at}\n\n"
     
     message += f"📊 Total Users: {len(users)}"
     
@@ -3578,16 +3336,16 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_first_name = update.effective_user.first_name or "User"
     clean_first_name = clean_text(user_first_name)
     
-    trial_info = get_user_trial_info(user_id)
+    trial_info = await get_user_trial_info(user_id)
     
     # If user doesn't exist, add them
     if not trial_info['exists']:
         username = update.effective_user.username or "Not set"
-        add_authorized_user(user_id, username, clean_first_name, 0, False)
-        trial_info = get_user_trial_info(user_id)
+        await add_authorized_user(user_id, username, clean_first_name, 0, False)
+        trial_info = await get_user_trial_info(user_id)
     
     # Check trial availability
-    trial_allowed, reason = can_user_use_trial(user_id)
+    trial_allowed, reason = await can_user_use_trial(user_id)
     
     status = "🎁 Trial Available" if trial_allowed else "💰 Paid User" if trial_info['is_paid_user'] else "🔒 Trial Used & Blocked"
     
@@ -3640,7 +3398,7 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ├─ 🔒 Trial PERMANENTLY blocked
 ├─ ⚠️ One-time trial already used
 ├─ 💰 Contact admin for paid access
-└─ 👑 Admin: @VIP_X_OFFICIAL
+└─ 👑 Admin: @PRIME_MODDER_X
 """
     
     await update.message.reply_text(stats_text)
@@ -3648,8 +3406,8 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Show help menu"""
     user_id = update.effective_user.id
-    trial_info = get_user_trial_info(user_id)
-    trial_allowed, _ = can_user_use_trial(user_id)
+    trial_info = await get_user_trial_info(user_id)
+    trial_allowed, _ = await can_user_use_trial(user_id)
     
     status = "🎁 Trial Available" if trial_allowed else "💰 Paid User" if trial_info['is_paid_user'] else "🔒 Trial Used & Blocked"
     
@@ -3682,7 +3440,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ├─ ❌ After trial: PERMANENTLY BLOCKED
 ├─ 🔒 No further trial access
 ├─ 💰 Only paid access after trial
-└─ 👑 Admin: @VIP_X_OFFICIAL
+└─ 👑 Admin: @PRIME_MODDER_X
 """
     
     if is_admin(user_id):
@@ -3723,7 +3481,7 @@ Only admins can use this command.
         return
     
     message = ' '.join(context.args)
-    users = get_all_authorized_users()
+    users = await get_all_authorized_users()
     
     if not users:
         await update.message.reply_text("📭 No users to broadcast to.")
@@ -3737,10 +3495,10 @@ Only admins can use this command.
         f"✅ Sent: 0 | ❌ Failed: 0"
     )
     
-    for user in users:
+    for user_id, username, _, _, _, _, _, _ in users:
         try:
             await context.bot.send_message(
-                chat_id=user['user_id'],
+                chat_id=user_id,
                 text=f"""
 ╔════════════════════════════════════════╗
 ║          📢 BROADCAST MESSAGE          ║
@@ -3757,7 +3515,7 @@ Only admins can use this command.
             sent += 1
         except Exception as e:
             failed += 1
-            logger.error(f"Failed to send to {user['user_id']}: {e}")
+            logger.error(f"Failed to send to {user_id}: {e}")
         
         # Update status every 5 sends
         if (sent + failed) % 5 == 0:
@@ -3792,9 +3550,17 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Log errors"""
     logger.error(f"Update {update} caused error {context.error}")
 
+async def post_init(application: Application):
+    """Initialize MongoDB connection after bot starts"""
+    await mongo.connect()
+
+async def shutdown(application: Application):
+    """Clean up MongoDB connection on shutdown"""
+    await mongo.close()
+
 def main():
     """Start the bot."""
-    application = Application.builder().token(BOT_TOKEN).build()
+    application = Application.builder().token(BOT_TOKEN).post_init(post_init).build()
     
     # Add command handlers
     application.add_handler(CommandHandler("start", start))
@@ -3826,7 +3592,8 @@ def main():
 ├─🤖 Bot Token: Loaded
 ├─📊 Total APIs: {TOTAL_APIS}
 ├─⚡ Attack Mode: FLASH ATTACK
-├─🗄️ Database: MySQL (cPanel)
+├─💾 Database: MongoDB (Cloud)
+├─📀 Database URL: mongodb+srv://nikilsaxena843_db_user:****@vipbot.puv6gfk.mongodb.net
 ├─👑 Admin Users: {len(ADMIN_USER_IDS)}
 └─🔥 Status: Starting...
 
