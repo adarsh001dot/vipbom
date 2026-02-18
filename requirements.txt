@@ -1,4 +1,14 @@
+# Core dependencies
 python-telegram-bot==20.7
 aiohttp==3.9.1
-mysql-connector-python==8.2.0
-asyncio==3.4.3
+pymysql==1.1.0
+cryptography==41.0.7
+
+# Optional but recommended
+python-dotenv==1.0.0  # For environment variables
+requests==2.31.0      # Fallback HTTP client
+colorama==0.4.6       # Colored console output
+psutil==5.9.6         # System monitoring
+
+# Version constraints
+# Python 3.8+ required
