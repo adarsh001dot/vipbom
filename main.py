@@ -17,7 +17,7 @@ BOT_TOKEN = "8448343135:AAEP7CjK4cI4SoeR16ytrG2ytjkncpkTKPw"
 
 # MySQL Configuration
 MYSQL_CONFIG = {
-    'host': 'localhost',
+    'host': 'ms-154.servly.top',
     'port': 3306,
     'database': 'vipxoffic_vip',
     'user': 'vipxoffic_vip',
